@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Vent</string>
+    <string name="Header">Event Registeration</string>
+    <string name="ViewData">View Events</string>
+    <string name="programName">Program Name</string>
+    <string name="programType">Program Type</string>
+    <string name="startDate">Start Date</string>
+    <string name="endDate">End Date</string>
+    <string name="startTime">Start Time</string>
+    <string name="endTime">End Time</string>
+    <string name="submit">Submit</string>
+    <string name="AboutUs">About Us</string>
+    <string name="Logout">Logout</string>
+
+    <string name="navigation_open">Open Navigation drawer</string>
+    <string name="navigation_close">Close Navigation drawer</string>
+
+    <string name="Landscape_Warning">Please rotate your screen…This app does not support landscape mode</string>
+    <string name="Home_Nav">Home</string>
+    <string name="About_Us_Title">About Me</string>
+    <string name="About_Us_Body">Hi, I\'m Deril Kuiran Chundakal. I\'m an MSc IT student in my first year and also work at an RPA company focusing on JavaScript and Node.js development. My passion lies in tech, programming, and music production. I love exploring new skills and diving into complex topics like Digital Image Processing, Fourier Transforms, and stock markets.</string>
+    <string name="About_Us_Body_2">\nOutside of tech, I enjoy making music with my DAW, Traction Waveform Free, and MIDI keyboard. My music taste ranges from soulful tunes to cinematic soundscapes. I\'m always on a journey to strengthen both my mind and body, with a mix of HIIT workouts and kickboxing.</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+</resources>

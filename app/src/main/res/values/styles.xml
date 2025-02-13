@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <resources>
+        <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <item name="boxStrokeColor">@color/blue</item>
+            <item name="backgroundTint">@color/blue</item>
+            <item name="android:textColorHint">@color/black</item>
+            <item name="hintTextColor">@color/blue</item>
+
+        </style>
+
+    <style name="DisabledEditTextStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/disabled_color</item> <!-- Grey color for disabled state -->
+        <item name="hintTextColor">@color/disabled_color</item> <!-- Grey color for hint text -->
+    </style>
+
+    <style name="DisabledAutoCompleteStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+        <item name="boxStrokeColor">@color/disabled_color</item> <!-- Grey color for disabled state -->
+        <item name="hintTextColor">@color/disabled_color</item> <!-- Grey color for hint text -->
+    </style>
+
+</resources>
