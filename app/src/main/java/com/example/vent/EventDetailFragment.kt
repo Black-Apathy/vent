@@ -7,8 +7,10 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import com.example.vent.utils.DateUtils.formatDate
+import com.example.vent.utils.PdfUtils
 import com.example.vent.utils.TimeUtils.formatTime
 
 
@@ -44,6 +46,13 @@ class EventDetailFragment : Fragment() {
         eventEndDate.text = event.endDate?.let { formatDate(it) } ?: "Unknown Date"
         eventStartTime.text = formatTime(event.startTime)
         eventEndTime.text = formatTime(event.startTime)
+
+        // Set up the "Download PDF" button
+        val btnDownloadPdf: Button = rootView.findViewById(R.id.btnDownloadPdf)
+        btnDownloadPdf.setOnClickListener {
+            // Trigger PDF generation
+            PdfUtils.createPdf(requireContext(), event)
+        }
 
         return rootView
     }

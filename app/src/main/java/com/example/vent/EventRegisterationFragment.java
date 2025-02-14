@@ -4,7 +4,6 @@ import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,9 +20,6 @@ import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.example.vent.utils.DateUtils;
-import com.example.vent.utils.TimeUtils;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
@@ -35,7 +31,6 @@ import com.google.android.material.textfield.TextInputLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -47,7 +42,7 @@ import java.util.Objects;
 
 public class EventRegisterationFragment extends Fragment {
 
-    private String insertUrl = "https://rgtafc-ip-152-58-2-57.tunnelmole.net/submit";
+    private final String insertUrl = "https://2i8zfg-ip-122-170-2-205.tunnelmole.net/submit";
     private String dynamicTitle = "Event Registration"; // Set this based on the current state
 
     private DrawerLayout drawerLayout;
