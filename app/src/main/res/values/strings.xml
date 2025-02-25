@@ -11,7 +11,11 @@
     <string name="submit">Submit</string>
     <string name="AboutUs">About Us</string>
     <string name="Logout">Logout</string>
-
+    <string name="EmailText">Email</string>
+    <string name="PasswordText">Password</string>
+    <string name="SignUpText">Let\'s sign you up...</string>
+    <string name="SignUpOrText">or</string>
+    <string name="GoogleOAuth">Google</string>
     <string name="navigation_open">Open Navigation drawer</string>
     <string name="navigation_close">Close Navigation drawer</string>
 

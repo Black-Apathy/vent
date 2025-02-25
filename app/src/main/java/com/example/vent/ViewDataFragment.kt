@@ -77,7 +77,7 @@ class ViewDataFragment : Fragment() {
     }
 
     private fun fetchEvents() {
-        val url = "https://h3edlm-ip-122-170-2-205.tunnelmole.net/data"
+        val url = "https://rgtafc-ip-152-58-2-57.tunnelmole.net/data"
 
         context?.let { ctx ->
             requestQueue = Volley.newRequestQueue(ctx)

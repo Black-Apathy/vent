@@ -4,6 +4,8 @@ import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
+
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,6 +21,7 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.drawerlayout.widget.DrawerLayout;
+
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -42,7 +45,7 @@ import java.util.Objects;
 
 public class EventRegisterationFragment extends Fragment {
 
-    private final String insertUrl = "https://2i8zfg-ip-122-170-2-205.tunnelmole.net/submit";
+    private String insertUrl = "https://rgtafc-ip-152-58-2-57.tunnelmole.net/submit";
     private String dynamicTitle = "Event Registration"; // Set this based on the current state
 
     private DrawerLayout drawerLayout;
@@ -82,7 +85,9 @@ public class EventRegisterationFragment extends Fragment {
             Log.e("EventRegisterationFragment", "autoCompleteTextView is null");
             return;
         }
-        autoCompleteTextView.setContentDescription("Select a program type from the dropdown");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.DONUT) {
+            autoCompleteTextView.setContentDescription("Select a program type from the dropdown");
+        }
 
         adapterItems = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, programTypes);
         autoCompleteTextView.setAdapter(adapterItems);
@@ -164,18 +169,28 @@ public class EventRegisterationFragment extends Fragment {
 
     private void showKeyboard(View view) {
         if (view != null) {
-            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            InputMethodManager imm = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+                imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            }
             if (imm != null) {
-                imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+                    imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+                }
             }
         }
     }
 
     private void hideKeyboard(View view) {
         if (view != null) {
-            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            InputMethodManager imm = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+                imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            }
             if (imm != null) {
-                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                }
             }
         }
     }
