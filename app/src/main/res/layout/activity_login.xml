@@ -1,130 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:background="@drawable/login_background_gradient">
+    android:padding="24dp">
 
     <!-- Signup Text -->
-    <TextView
-        android:id="@+id/txtSignUpHeader"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/composeView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_gravity="center"
-        android:layout_marginBottom="15dp"
-        android:fontFamily="@font/inter_medium"
-        android:text="@string/SignUpText"
-        android:textColor="@color/black"
-        android:textSize="32sp" />
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="295dp"
-        android:layout_height="420dp"
-        android:layout_margin="16dp"
-        app:cardElevation="15dp"
-        app:cardCornerRadius="20dp"
-        app:cardBackgroundColor="@color/login_card">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="16dp">
-
-            <!-- Email Input -->
-            <EditText
-                android:autofillHints="emailAddress"
-                android:id="@+id/edtEmail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/EmailText"
-                android:inputType="textEmailAddress"
-                android:background="@drawable/rounded_edittext"
-                android:padding="12dp" />
-
-            <!-- Password Input -->
-            <EditText
-                android:autofillHints="password"
-                android:id="@+id/edtPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/PasswordText"
-                android:inputType="textPassword"
-                android:background="@drawable/rounded_edittext"
-                android:padding="12dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="20dp" />
-
-            <!-- Submit Button -->
-            <Button
-                android:id="@+id/btnSignUp"
-                android:layout_width="200dp"
-                android:layout_height="50dp"
-                android:layout_marginTop="24dp"
-                android:backgroundTint="@color/blue"
-                android:fontFamily="@font/inter"
-                android:text="@string/submit"
-                android:textColor="@color/white" />
-
-            <TextView
-                android:id="@+id/txtSignUp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="2dp"
-                android:fontFamily="@font/inter"
-                android:text="@string/SignUpOrText"
-                android:textColor="@color/black"
-                android:textSize="20sp" />
-
-            <LinearLayout
-                android:layout_width="200dp"
-                android:layout_height="50dp"
-                android:orientation="horizontal"
-                android:background="@drawable/rounded_button"
-                android:padding="2dp"
-                android:gravity="center_vertical"
-                android:layout_marginTop="24dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <!-- Google Logo (Left-Aligned) -->
-                <ImageView
-                    android:contentDescription="@string/GoogleOAuth"
-                    android:layout_width="29dp"
-                    android:layout_height="29dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginStart="10dp"
-                    android:src="@drawable/google_logo" />
-
-                <!-- Button Text (Centered) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/inter"
-                        android:paddingHorizontal="12dp"
-                        android:layout_marginStart="12pt"
-                        android:text="@string/GoogleOAuth"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-                </LinearLayout>
-            </LinearLayout>
-
-
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-
+        android:layout_marginBottom="15dp"/>
 </LinearLayout>

@@ -1,12 +1,20 @@
 [versions]
+activityCompose = "1.10.1"
+activityComposeVersion = "1.9.0"
 agp = "8.8.1"
 itext7Core = "7.1.9"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
+lifecycleRuntimeCompose = "2.8.7"
 material = "1.12.0"
 constraintlayout = "2.1.4"
+material3 = "1.3.1"
+materialVersion = "1.7.8"
+ui = "1.6.4"
+uiTooling = "1.6.4"
+uiToolingPreview = "1.6.4"
 volley = "1.2.1"
 kotlin = "1.9.24"
 runtimeAndroid = "1.7.7"
@@ -16,8 +24,21 @@ foundationAndroid = "1.7.7"
 material3Android = "1.3.1"
 media3CommonKtx = "1.5.1"
 foundationAndroidVersion = "1.7.8"
+uiAndroidVersion = "1.7.8"
 
 [libraries]
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-activity-compose-v190 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
+androidx-material = { module = "androidx.compose.material:material", version.ref = "materialVersion" }
+androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+androidx-ui = { module = "androidx.compose.ui:ui", version.ref = "uiAndroidVersion" }
+androidx-ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts", version.ref = "uiAndroidVersion" }
+androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiAndroidVersion" }
+androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiAndroidVersion" }
+androidx-ui-tooling-preview-v164 = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
+androidx-ui-tooling-v164 = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiTooling" }
+androidx-ui-v164 = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 itext7-core = { module = "com.itextpdf:itext7-core", version.ref = "itext7Core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -29,6 +50,7 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
 androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroidVersion" }
+androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroidVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
