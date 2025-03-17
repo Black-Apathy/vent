@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
@@ -39,6 +41,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 
@@ -65,7 +69,9 @@ class LoginActivity : ComponentActivity() {
     showBackground = true,
     device = "spec:width=411dp,height=891dp"
 )
+
 @Composable
+
 private fun SignUpLayout(){
     Box(
         modifier = Modifier
@@ -126,7 +132,7 @@ private fun SignUpCard() {
             ) {
 
                 //  Email
-                LoginInputs("Email", Icons.Default.Email, "Email Icon")
+                LoginInputs("Email", Icons.Default.Email, "Email Icon", isEmailField = true)
 
                 //  Password
                 LoginInputs("Password", Icons.Default.Lock, "Password Icon")
@@ -197,21 +203,86 @@ private fun SignUpCard() {
 }
 
 @Composable
-private fun LoginInputs(fieldLabel: String, leadingIcon: ImageVector, iconDescription: String){
+private fun LoginInputs(
+    fieldLabel: String,
+    leadingIcon: ImageVector,
+    iconDescription: String,
+    isEmailField: Boolean = false,
+    isPasswordField: Boolean = false
+) {
     var input by remember { mutableStateOf("") }
+    var isValid by remember { mutableStateOf(false) }
+
+    val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
+
     OutlinedTextField(
         modifier = Modifier.padding(bottom = 10.dp),
         value = input,
         label = { Text(fieldLabel) },
-        leadingIcon = {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = iconDescription
-            )
+        leadingIcon = { Icon(imageVector = leadingIcon, contentDescription = iconDescription) },
+        singleLine = true,
+        visualTransformation = if (isPasswordField) PasswordVisualTransformation() else VisualTransformation.None,
+        trailingIcon = {
+            if (input.isNotEmpty()) {
+                Icon(
+                    imageVector = if (isValid) Icons.Filled.Check else Icons.Filled.Close,
+                    contentDescription = if (isValid) "Valid Input" else "Invalid Input",
+                    tint = if (isValid) Color.Green else Color.Red
+                )
+            }
         },
-        onValueChange = {
-                newValue -> input = newValue
-        }
+        onValueChange = { newValue ->
+            input = newValue
+            isValid = when {
+                isEmailField -> emailRegex.matches(newValue)
+                isPasswordField -> {
+                    val result = isPasswordValid(newValue)
+                    println("Password: $newValue, isValid: $result") // Debugging output
+                    result
+                }
+                else -> false
+            }
+        },
+        isError = input.isNotEmpty() && !isValid
     )
+
+    if (input.isNotEmpty() && !isValid) {
+        Text(
+            text = when {
+                isEmailField -> "Invalid email format"
+                isPasswordField -> getPasswordErrorMessage(input)
+                else -> ""
+            },
+            color = Color.Red,
+            fontSize = 14.sp,
+            modifier = Modifier.padding(start = 8.dp)
+        )
+    }
 }
 
+// Modular password validation functions
+fun hasMinimumLength(password: String) = password.length >= 8
+fun hasUppercase(password: String) = password.any { it.isUpperCase() }
+fun hasLowercase(password: String) = password.any { it.isLowerCase() }
+fun hasDigit(password: String) = password.any { it.isDigit() }
+//fun hasSpecialChar(password: String) = password.any { "!@#\$%^&*()_+[]{}:;<>?/".contains(it) }
+fun hasSpecialChar(password: String) = password.any { it.isLetterOrDigit().not() }
+
+fun isPasswordValid(password: String): Boolean {
+    return hasMinimumLength(password) &&
+            hasUppercase(password) &&
+            hasLowercase(password) &&
+            hasDigit(password) &&
+            hasSpecialChar(password)
+}
+
+fun getPasswordErrorMessage(password: String): String {
+    return when {
+        !hasMinimumLength(password) -> "Password must be at least 8 characters long"
+        !hasUppercase(password) -> "Password must contain at least one uppercase letter"
+        !hasLowercase(password) -> "Password must contain at least one lowercase letter"
+        !hasDigit(password) -> "Password must contain at least one digit"
+        !hasSpecialChar(password) -> "Password must contain at least one special character"
+        else -> "Weak password"
+    }
+}
