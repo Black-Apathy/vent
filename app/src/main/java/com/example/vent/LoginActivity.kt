@@ -1,6 +1,7 @@
 package com.example.vent
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -105,7 +106,7 @@ private fun SignUpLayout(){
 private fun SignUpCard() {
     Box(
         modifier = Modifier
-            .width(295.dp)
+            .width(350.dp)
             .height(420.dp)
     ) {
         // Card with shadow
@@ -128,14 +129,14 @@ private fun SignUpCard() {
         ){
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.align(Alignment.Center)
             ) {
 
                 //  Email
                 LoginInputs("Email", Icons.Default.Email, "Email Icon", isEmailField = true)
 
                 //  Password
-                LoginInputs("Password", Icons.Default.Lock, "Password Icon")
+                LoginInputs("Password", Icons.Default.Lock, "Password Icon", isPasswordField = true)
 
                 // Submit Button
                 Button(
@@ -237,7 +238,6 @@ private fun LoginInputs(
                 isEmailField -> emailRegex.matches(newValue)
                 isPasswordField -> {
                     val result = isPasswordValid(newValue)
-                    println("Password: $newValue, isValid: $result") // Debugging output
                     result
                 }
                 else -> false
@@ -265,14 +265,13 @@ fun hasMinimumLength(password: String) = password.length >= 8
 fun hasUppercase(password: String) = password.any { it.isUpperCase() }
 fun hasLowercase(password: String) = password.any { it.isLowerCase() }
 fun hasDigit(password: String) = password.any { it.isDigit() }
-//fun hasSpecialChar(password: String) = password.any { "!@#\$%^&*()_+[]{}:;<>?/".contains(it) }
-fun hasSpecialChar(password: String) = password.any { it.isLetterOrDigit().not() }
+fun hasSpecialChar(password: String) = password.any { "!@#\$%^&*()_+[]{}:;<>?/".contains(it) }
 
 fun isPasswordValid(password: String): Boolean {
-    return hasMinimumLength(password) &&
-            hasUppercase(password) &&
-            hasLowercase(password) &&
-            hasDigit(password) &&
+    return hasMinimumLength(password) and
+            hasUppercase(password) and
+            hasLowercase(password) and
+            hasDigit(password) and
             hasSpecialChar(password)
 }
 
