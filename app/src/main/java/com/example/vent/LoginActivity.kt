@@ -1,7 +1,7 @@
 package com.example.vent
 
 import android.os.Bundle
-import android.util.Log
+//import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -66,13 +66,8 @@ class LoginActivity : ComponentActivity() {
     }
 }
 
-@Preview(
-    showBackground = true,
-    device = "spec:width=411dp,height=891dp"
-)
-
+@Preview
 @Composable
-
 private fun SignUpLayout(){
     Box(
         modifier = Modifier
@@ -213,11 +208,17 @@ private fun LoginInputs(
 ) {
     var input by remember { mutableStateOf("") }
     var isValid by remember { mutableStateOf(false) }
+    val primaryBlue = Color(0xFF003366)
 
     val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
 
     OutlinedTextField(
         modifier = Modifier.padding(bottom = 10.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = primaryBlue,
+            cursorColor = primaryBlue,
+            focusedLabelColor = primaryBlue
+        ),
         value = input,
         label = { Text(fieldLabel) },
         leadingIcon = { Icon(imageVector = leadingIcon, contentDescription = iconDescription) },

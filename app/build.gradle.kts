@@ -44,22 +44,16 @@ android {
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.volley)
-    implementation(libs.material)
+    implementation(libs.material) // Or libs.androidx.material if they point to the same thing
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.androidx.foundation.android)
     implementation(libs.media3.common.ktx)
-    implementation(libs.androidx.ui.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(libs.itext7.core)
 
-    implementation(libs.androidx.ui.v164)
-    implementation(libs.androidx.material)
-    implementation(libs.androidx.ui.tooling.preview.v164)
-    debugImplementation(libs.androidx.ui.tooling.v164)
-    implementation(libs.androidx.activity.compose.v190)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui.tooling.preview)

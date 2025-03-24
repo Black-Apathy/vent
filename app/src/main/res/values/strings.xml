@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Vent</string>
-    <string name="Header">Event Registeration</string>
+    <string name="Header">Event Registration</string>
     <string name="ViewData">View Events</string>
     <string name="programName">Program Name</string>
     <string name="programType">Program Type</string>
@@ -13,7 +13,7 @@
     <string name="Logout">Logout</string>
     <string name="EmailText">Email</string>
     <string name="PasswordText">Password</string>
-    <string name="SignUpText">Let\'s sign you up...</string>
+    <string name="SignUpText">Let\'s sign you up…</string>
     <string name="SignUpOrText">or</string>
     <string name="GoogleOAuth">Google</string>
     <string name="navigation_open">Open Navigation drawer</string>
