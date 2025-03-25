@@ -1,0 +1,20 @@
+{
+  "name": "vent-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "moment": "^2.30.1",
+    "mysql2": "^3.11.0",
+    "tunnelmole": "^2.2.14"
+  },
+  "description": ""
+}
