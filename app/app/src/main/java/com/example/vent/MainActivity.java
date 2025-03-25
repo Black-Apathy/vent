@@ -1,5 +1,6 @@
 package com.example.vent;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
+    private boolean backPressedOnce = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +48,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     .commit();
             navigationView.setCheckedItem(R.id.nav_home);
         }
+
+        // Override back press to show confirmation
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (backPressedOnce) {
+                    // If back pressed twice, exit the app
+                    MainActivity.super.getOnBackPressedDispatcher().onBackPressed();  // Corrected this line
+                } else {
+                    // Show toast and set flag to true
+                    Toast.makeText(MainActivity.this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+                    backPressedOnce = true;
+
+                    // Reset the flag after 2 seconds
+                    new android.os.Handler().postDelayed(() -> backPressedOnce = false, 2000);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -75,12 +97,4 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-        @Override
-    public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
 }

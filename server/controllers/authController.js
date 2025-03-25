@@ -1,20 +1,20 @@
 const connection = require("../db");
 
 exports.registerUser = (req, res) => {
-  const { email, password, role_requested } = req.body;
+  const { email, password } = req.body;
 
-  if (!email || !password || !role_requested) {
+  if (!email || !password) {
     return res
       .status(400)
       .json({ message: "All fields are required for registration" });
   }
 
   const mysql_qry =
-    "INSERT INTO pending_users (email, password_hash, role_requested) VALUES (?, ?, ?)";
+    "INSERT INTO pending_users (email, password_hash) VALUES (?, ?)";
 
   connection.query(
     mysql_qry,
-    [email, password, role_requested],
+    [email, password],
     (err) => {
       if (err) {
         console.error("Error inserting data into pending_users:", err);

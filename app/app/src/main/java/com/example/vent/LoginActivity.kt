@@ -1,7 +1,11 @@
 package com.example.vent
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-//import android.util.Log
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -34,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,6 +54,14 @@ import androidx.compose.ui.tooling.preview.Preview
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.volley.NoConnectionError
+import com.android.volley.toolbox.Volley
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.TimeoutError
+import com.android.volley.toolbox.StringRequest
+import com.example.vent.network.ApiConstants
+import com.example.vent.network.VolleyHelper
 
 val interFontFamily = FontFamily(
     Font(R.font.inter_24_regular, FontWeight.Normal),
@@ -99,6 +112,15 @@ private fun SignUpLayout(){
 
 @Composable
 private fun SignUpCard() {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isEmailValid by remember { mutableStateOf(false) }
+    var isPasswordValid by remember { mutableStateOf(false) }
+
+    val isFormValid = isEmailValid && isPasswordValid
+
+    val context = LocalContext.current
+
     Box(
         modifier = Modifier
             .width(350.dp)
@@ -128,14 +150,44 @@ private fun SignUpCard() {
             ) {
 
                 //  Email
-                LoginInputs("Email", Icons.Default.Email, "Email Icon", isEmailField = true)
+                LoginInputs(
+                    fieldLabel = "Email",
+                    leadingIcon = Icons.Filled.Email,
+                    iconDescription = "Email Icon",
+                    isEmailField = true,
+                    onInputChange = { email = it },
+                    onValidationChange = { isEmailValid = it }
+                )
 
                 //  Password
-                LoginInputs("Password", Icons.Default.Lock, "Password Icon", isPasswordField = true)
+                LoginInputs(
+                    fieldLabel = "Password",
+                    leadingIcon = Icons.Filled.Lock,
+                    iconDescription = "Password Icon",
+                    isPasswordField = true,
+                    onInputChange = { password = it },
+                    onValidationChange = { isPasswordValid = it }
+                )
 
                 // Submit Button
                 Button(
-                    onClick = {  },
+                    onClick = {
+                        if (isFormValid) {
+                            onSubmit(context,email, password)  { isSuccess ->
+                                if (isSuccess) {
+                                    // If successful, navigate to MainActivity (XML-based)
+                                    val intent = Intent(context, MainActivity::class.java)
+                                    context.startActivity(intent)
+                                    // Optionally, finish the LoginActivity to prevent user from going back
+                                    (context as? Activity)?.finish()
+                                } else {
+                                    // Show error (optional)
+                                    Toast.makeText(context, "Login Failed", Toast.LENGTH_SHORT).show()
+                                }
+                            }// ✅ Submit data if valid
+                        }
+                    },
+                    enabled = isFormValid,
                     modifier = Modifier
                         .width(200.dp)
                         .height(75.dp)
@@ -204,7 +256,9 @@ private fun LoginInputs(
     leadingIcon: ImageVector,
     iconDescription: String,
     isEmailField: Boolean = false,
-    isPasswordField: Boolean = false
+    isPasswordField: Boolean = false,
+    onInputChange: (String) -> Unit,
+    onValidationChange: (Boolean) -> Unit
 ) {
     var input by remember { mutableStateOf("") }
     var isValid by remember { mutableStateOf(false) }
@@ -243,6 +297,8 @@ private fun LoginInputs(
                 }
                 else -> false
             }
+            onInputChange(input) // Pass input value to parent
+            onValidationChange(isValid) // Pass validation status to parent
         },
         isError = input.isNotEmpty() && !isValid
     )
@@ -285,4 +341,52 @@ fun getPasswordErrorMessage(password: String): String {
         !hasSpecialChar(password) -> "Password must contain at least one special character"
         else -> "Weak password"
     }
+}
+
+fun onSubmit(context: Context, email: String, password: String, onResult: (Boolean) -> Unit){
+    val url = ApiConstants.LOGIN_URL
+    val stringRequest = object : StringRequest(
+        Request.Method.POST, url,
+        Response.Listener { response ->
+            // Handle response here
+            // You can parse the response if needed
+            Log.d("LoginResponse", response)
+
+            // If login is successful, return true
+            onResult(true)
+        },
+        Response.ErrorListener { error ->
+            // Log basic error message
+            Log.e("LoginError", "Error: ${error.message}")
+
+            // Log cause if available
+            Log.e("LoginError", "Error Cause: ${error.cause?.message}")
+
+            // Log network response details if available
+            error.networkResponse?.let { networkResponse ->
+                Log.e("LoginError", "Status Code: ${networkResponse.statusCode}")
+                Log.e("LoginError", "Response Data: ${String(networkResponse.data)}")
+            }
+
+            // In case of a network timeout or other unknown errors
+            if (error is TimeoutError) {
+                Log.e("LoginError", "Network Timeout")
+            } else if (error is NoConnectionError) {
+                Log.e("LoginError", "No Connection")
+            }
+
+            // Return failure result
+            onResult(false)
+        }
+    ){
+        override fun getParams(): MutableMap<String, String> {
+            val params = mutableMapOf<String, String>()
+            params["email"] = email
+            params["password"] = password
+            return params
+        }
+    }
+
+    // Adding the request to the queue
+    VolleyHelper.getInstance(context).addToRequestQueue(stringRequest)
 }
