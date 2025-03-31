@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -34,7 +35,7 @@ android {
         jvmTarget = "17"
     }
     buildFeatures {
-        compose = true
+        compose = true // Enable Compose
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
@@ -44,20 +45,29 @@ android {
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.volley)
-    implementation(libs.material) // Or libs.androidx.material if they point to the same thing
+    implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.androidx.foundation.android)
     implementation(libs.media3.common.ktx)
+    implementation(libs.itext7.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(libs.itext7.core)
-
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation(libs.androidx.activity.compose)
     debugImplementation(libs.androidx.ui.tooling)
+    //Jetpack compose dependencies
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.bom.v20230800)
+    implementation(libs.androidx.compose.ui.ui)
+    implementation(libs.ui.graphics)
+    implementation(libs.androidx.compose.ui.ui.tooling.preview)
+    implementation("androidx.compose.material3:material3:1.3.1")
+    // Volley
+    implementation(libs.volley) // Use the latest version
+    //Core KTX
+    implementation("androidx.core:core-ktx:1.13.1")
+    // required, else it doesn't work at all.
+    implementation("androidx.work:work-runtime:2.9.1")
+
+
 }

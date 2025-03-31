@@ -25,5 +25,7 @@
     <string name="About_Us_Body">Hi, I\'m Deril Kuiran Chundakal. I\'m an MSc IT student in my first year and also work at an RPA company focusing on JavaScript and Node.js development. My passion lies in tech, programming, and music production. I love exploring new skills and diving into complex topics like Digital Image Processing, Fourier Transforms, and stock markets.</string>
     <string name="About_Us_Body_2">\nOutside of tech, I enjoy making music with my DAW, Traction Waveform Free, and MIDI keyboard. My music taste ranges from soulful tunes to cinematic soundscapes. I\'m always on a journey to strengthen both my mind and body, with a mix of HIIT workouts and kickboxing.</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="default_android_client_id">553561522845-ep2p8l84b20pj7ut0e8s40paaiiirjr0.apps.googleusercontent.comm</string>
+    <string name="default_web_client_id">553561522845-m2foh2pm7gl23rqjfq9u0ginge6n98ra.apps.googleusercontent.com</string>
 
 </resources>

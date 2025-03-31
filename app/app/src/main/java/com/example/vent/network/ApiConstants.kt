@@ -2,7 +2,7 @@ package com.example.vent.network
 
 object ApiConstants {
     // Base URL for the API
-    private const val BASE_URL = "https://y4gncs-ip-122-170-2-205.tunnelmole.net"
+    private const val BASE_URL = "https://ammrsf-ip-122-170-2-205.tunnelmole.net"
 
     // Endpoints
     const val LOGIN_URL = "${BASE_URL}/register"
