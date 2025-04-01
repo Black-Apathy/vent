@@ -7,6 +7,7 @@ composeBom = "2025.03.01"
 composeBomVersion = "2025.03.01"
 composeCompiler = "2.1.0"
 coreKtx = "1.15.0"
+coreKtxVersion = "1.13.0"
 itext7Core = "7.1.9"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -44,6 +45,7 @@ androidx-compose-material3-material3 = { module = "androidx.compose.material3:ma
 androidx-compose-ui-ui = { module = "androidx.compose.ui:ui" }
 androidx-compose-ui-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-core-ktx-v1130 = { module = "androidx.core:core-ktx", version.ref = "coreKtxVersion" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 androidx-material = { module = "androidx.compose.material:material", version.ref = "materialVersion" }
 androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }

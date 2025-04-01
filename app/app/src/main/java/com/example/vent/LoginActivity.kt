@@ -8,20 +8,22 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -30,14 +32,18 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -113,6 +119,28 @@ class LoginActivity : ComponentActivity() {
         val isFormValid = isEmailValid && isPasswordValid
 
         val context = LocalContext.current
+        var isLoading by remember { mutableStateOf(false) }
+
+        // Animate gradient offset
+        val gradientOffset = remember { Animatable(0f) }
+
+        LaunchedEffect(isLoading) {
+            if (isLoading) {
+                gradientOffset.animateTo(
+                    targetValue = 200f,  // Adjust for desired animation speed/distance
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2000, easing = LinearEasing),
+                        repeatMode = RepeatMode.Restart
+                    )
+                )
+            }
+        }
+
+        val radialBrush = Brush.horizontalGradient(
+            listOf(Color(0xFFFF8400), Color(0xFF003366)),
+            startX = gradientOffset.value,
+            endX = gradientOffset.value + 400f  // Dynamic endX to match button width
+        )
 
         Box(
             modifier = Modifier
@@ -162,13 +190,6 @@ class LoginActivity : ComponentActivity() {
                         onValidationChange = { isPasswordValid = it }
                     )
 
-                    val interactionSource = remember { MutableInteractionSource() }
-                    val scale by animateFloatAsState(
-                        targetValue = if (interactionSource.collectIsPressedAsState().value) 0.95f else 1f,
-                        animationSpec = spring(stiffness = Spring.StiffnessMedium)
-                    )
-                    var isLoading by remember { mutableStateOf(false) }
-
                     // Submit Button
                     Button(
                         onClick = {
@@ -195,16 +216,23 @@ class LoginActivity : ComponentActivity() {
                             .width(200.dp)
                             .height(75.dp)
                             .padding(top = 25.dp)
-                            .graphicsLayer(scaleX = scale, scaleY = scale),
-                        colors = ButtonDefaults.buttonColors(Color(0xFF003366)),
-                        elevation = ButtonDefaults.buttonElevation(10.dp),
-                        interactionSource = interactionSource
+                            .background(
+                                brush = if (isLoading) radialBrush else SolidColor(
+                                    if (isFormValid) Color(0xFF003366) else Color(0x0A808080) // ✅ Keeps validation logic intact
+                                ),
+                                shape = CircleShape
+                            ),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent
+                        ),
                     ) {
                         if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
+                            Text(
+                                text = "Loading...",
+                                fontSize = 18.sp,
                                 color = Color.White,
-                                strokeWidth = 2.dp
+                                fontFamily = interFontFamily,
+                                fontWeight = FontWeight.Normal
                             )
                         }
                         else{
@@ -295,7 +323,7 @@ class LoginActivity : ComponentActivity() {
     fun hasUppercase(password: String) = password.any { it.isUpperCase() }
     fun hasLowercase(password: String) = password.any { it.isLowerCase() }
     fun hasDigit(password: String) = password.any { it.isDigit() }
-    fun hasSpecialChar(password: String) = password.any { "!@#\$%^&*()_+[]{}:;<>?/".contains(it) }
+    fun hasSpecialChar(password: String) = password.any { "!@#$%^&*()_+[]{}:;<>?/".contains(it) }
 
     fun isPasswordValid(password: String): Boolean {
         return hasMinimumLength(password) and

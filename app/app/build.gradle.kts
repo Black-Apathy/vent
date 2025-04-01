@@ -65,9 +65,9 @@ dependencies {
     // Volley
     implementation(libs.volley) // Use the latest version
     //Core KTX
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation(libs.androidx.core.ktx.v1130)
     // required, else it doesn't work at all.
-    implementation("androidx.work:work-runtime:2.9.1")
+    implementation("androidx.work:work-runtime:2.10.0")
 
 
 }

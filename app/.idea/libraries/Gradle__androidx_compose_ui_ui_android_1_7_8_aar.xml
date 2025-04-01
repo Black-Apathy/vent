@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="Gradle: androidx.compose.ui:ui-android:1.7.8@aar" external-system-id="GRADLE">
     <ANNOTATIONS>
-      <root url="jar://$USER_HOME$/.gradle/caches/8.11.1/transforms/ab2eb504e399d4d7f8419b7a059eba75/transformed/jetified-ui-release/annotations.zip!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/8.11.1/transforms/0ac82ac4a07aaa23510287ba0df566aa/transformed/jetified-ui-release/annotations.zip!/" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/8.11.1/transforms/ab2eb504e399d4d7f8419b7a059eba75/transformed/jetified-ui-release/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/8.11.1/transforms/ab2eb504e399d4d7f8419b7a059eba75/transformed/jetified-ui-release/res" />
-      <root url="file://$USER_HOME$/.gradle/caches/8.11.1/transforms/ab2eb504e399d4d7f8419b7a059eba75/transformed/jetified-ui-release/AndroidManifest.xml" />
+      <root url="file://$USER_HOME$/.gradle/caches/8.11.1/transforms/0ac82ac4a07aaa23510287ba0df566aa/transformed/jetified-ui-release/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/8.11.1/transforms/0ac82ac4a07aaa23510287ba0df566aa/transformed/jetified-ui-release/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/8.11.1/transforms/0ac82ac4a07aaa23510287ba0df566aa/transformed/jetified-ui-release/jars/classes.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

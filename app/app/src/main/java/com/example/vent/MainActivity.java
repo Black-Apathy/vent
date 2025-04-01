@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Load Home Fragment by default
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new HomeFragment())
+                    .replace(R.id.fragment_container, new PendingUsersFragment())
                     .commit();
             navigationView.setCheckedItem(R.id.nav_home);
         }
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (itemId == R.id.nav_home) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new HomeFragment())
+                    .replace(R.id.fragment_container, new PendingUsersFragment())
                     .commit();
         } else if (itemId == R.id.nav_registration) {
             getSupportFragmentManager().beginTransaction()
