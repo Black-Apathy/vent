@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,6 +46,7 @@ class PendingUsersFragment : Fragment() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PendingUsersScreen() {
 
@@ -91,55 +94,63 @@ fun PendingUsersScreen() {
                         text = "test@example.com"
                     )
 
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 10.dp)
-                            .background(Color(0xFFFFE1B5), shape = RoundedCornerShape(30.dp))
-                            .padding(16.dp)
-                            .clickable { expanded = true }
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .width(150.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center // Centers text & icon
-                        ) {
-                            Text(text = selectedRole, color = Color.Black)
-                            Spacer(modifier = Modifier.width(8.dp)) // Adds space between text and icon
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Dropdown Arrow",
-                                tint = Color.Black
-                            )
-                        }
-                    }
-                    DropdownMenu(
+                    ExposedDropdownMenuBox(
                         expanded = expanded,
-                        onDismissRequest = { expanded = false })
-                    {
-                        listOf("Admin", "Teacher", "Student").forEach { role ->
-                            DropdownMenuItem(
-                                text = { Text(text = role) },
-                                onClick = {
-                                    selectedRole = role
-                                    expanded = false
-                                }
-                            )
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryEditable, true) // Ensures correct dropdown positioning
+                                .width(150.dp)
+                                .padding(top = 20.dp)
+                                .background(Color(0xFFFFF5EE), shape = RoundedCornerShape(30.dp))
+                                .padding(16.dp)
+                                .clickable { expanded = true }
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(text = selectedRole, color = Color.Black)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Dropdown Arrow",
+                                    tint = Color.Black
+                                )
+                            }
+                        }
+
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false } ,
+                            modifier = Modifier.background(Color(0xFFFFF5EE))
+                        ) {
+                            listOf("Admin", "Teacher", "Student").forEach { role ->
+                                DropdownMenuItem(
+                                    text = { Text(text = role) },
+                                    onClick = {
+                                        selectedRole = role
+                                        expanded = false
+                                    }
+                                )
+                            }
                         }
                     }
+
                     Row (
                         modifier = Modifier
-                            .padding(top = 16.dp)
-                            .fillMaxWidth()
-                            .padding(5.dp),
+                            .padding(top = 25.dp)
+                            .fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
                     ){
                         Button(
                             onClick = { /* Handle click */ },
                             modifier = Modifier
-                                .width(100.dp)
+                                .width(120.dp)
                                 .height(60.dp), // Adjust width as needed
-                            enabled = true, // Keeps it disabled
+                            enabled = selectedRole != "Set Role", // Keeps it disabled
                             shape = RoundedCornerShape(8.dp), // Adds 8dp border radius
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF7EFFDB), // Corrected syntax
@@ -147,29 +158,49 @@ fun PendingUsersScreen() {
                             ),
                             contentPadding = PaddingValues(0.dp)
                         ) {
-                            Text(
-                                text = "Accept",
-                                color = Color.Black,
-                                maxLines = 1
-                            ) // Button text
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp) // Space between icon and text
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check, // Tick Icon
+                                    contentDescription = "Accept",
+                                    tint = Color.Black
+                                )
+                                Text(
+                                    text = "Accept",
+                                    color = Color.Black,
+                                    maxLines = 1
+                                ) // Button text
+                            }
                         }
                         Button(
                             onClick = { /* Handle click */ },
                             modifier = Modifier
-                                .width(100.dp)
+                                .wrapContentWidth()
                                 .height(60.dp), // Adjust width as needed
-                            enabled = true, // Keeps it disabled
+                            enabled = selectedRole != "Set Role", // Keeps it disabled
                             shape = RoundedCornerShape(8.dp), // Adds 8dp border radius
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFFFF7F7A), // Corrected syntax
                                 disabledContainerColor = Color(0xFF9C9C9C)
                             )
                         ) {
-                            Text(
-                                text = "Reject",
-                                color = Color.Black,
-                                maxLines = 1
-                            ) // Button text
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ){
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Accept",
+                                    tint = Color.Black
+                                )
+                                Text(
+                                    text = "Reject",
+                                    color = Color.Black,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 }
