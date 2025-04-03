@@ -11,7 +11,7 @@ class VolleyHelper private constructor(context: Context) {
         @Volatile
         private var INSTANCE: VolleyHelper? = null
 
-        fun getInstance(context: Context) =
+        fun getInstance(context: Context?) =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: VolleyHelper(context).also { INSTANCE = it }
             }
