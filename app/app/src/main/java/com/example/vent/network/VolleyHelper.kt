@@ -5,7 +5,7 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 
-class VolleyHelper private constructor(context: Context) {
+class VolleyHelper private constructor(context: Context?) {
 
     companion object {
         @Volatile
@@ -18,7 +18,7 @@ class VolleyHelper private constructor(context: Context) {
     }
 
     private val requestQueue: RequestQueue by lazy {
-        Volley.newRequestQueue(context.applicationContext)
+        Volley.newRequestQueue(context?.applicationContext)
     }
 
     fun <T> addToRequestQueue(request: Request<T>) {

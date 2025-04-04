@@ -8,7 +8,7 @@ const {
 const router = express.Router();
 
 // GET all pending users
-router.get("/pending-users", getPendingUsers);
+router.get("/pending-user", getPendingUsers);
 
 // Approve user
 router.post("/approve-user", approveUser);

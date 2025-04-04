@@ -26,6 +26,6 @@ app.use(errorHandler);
 // Start the server
 app.listen(port, () => {
   console.log(
-    `🚀 Server is running on http://yfezsg-ip-122-170-2-205.tunnelmole.net/`
+    `🚀 Server is running`
   );
 });

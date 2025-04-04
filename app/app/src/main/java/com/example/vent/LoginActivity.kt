@@ -59,6 +59,7 @@ import com.android.volley.Response
 import com.android.volley.TimeoutError
 import com.android.volley.toolbox.StringRequest
 import com.example.vent.network.ApiConstants
+import com.example.vent.network.UserApiService
 import com.example.vent.network.VolleyHelper
 
 val interFontFamily = FontFamily(
@@ -117,6 +118,7 @@ class LoginActivity : ComponentActivity() {
         val context = LocalContext.current
         var isLoading by remember { mutableStateOf(false) }
 
+        // TODO: Add the animation for the sign up button to AnimationUtils.kt
         // Animate gradient offset
         val gradientOffset = remember { Animatable(0f) }
 
@@ -191,7 +193,7 @@ class LoginActivity : ComponentActivity() {
                         onClick = {
                             if (isFormValid) {
                                 isLoading = true
-                                onSubmit(context, email, password) { isSuccess ->
+                                UserApiService.signupUser(context, email, password) { isSuccess ->
                                     isLoading = false
                                     if (isSuccess) {
                                         // If successful, navigate to MainActivity (XML-based)
@@ -204,7 +206,7 @@ class LoginActivity : ComponentActivity() {
                                         Toast.makeText(context, "Login Failed", Toast.LENGTH_SHORT)
                                             .show()
                                     }
-                                }// ✅ Submit data if valid
+                                }
                             }
                         },
                         enabled = isFormValid && !isLoading,
@@ -338,54 +340,6 @@ class LoginActivity : ComponentActivity() {
             !hasSpecialChar(password) -> "Password must contain at least one special character"
             else -> "Weak password"
         }
-    }
-
-    fun onSubmit(context: Context, email: String, password: String, onResult: (Boolean) -> Unit) {
-        val url = ApiConstants.LOGIN_URL
-        val stringRequest = object : StringRequest(
-            Method.POST, url,
-            Response.Listener { response ->
-                // Handle response here
-                // You can parse the response if needed
-                Log.d("LoginResponse", response)
-
-                // If login is successful, return true
-                onResult(true)
-            },
-            Response.ErrorListener { error ->
-                // Log basic error message
-                Log.e("LoginError", "Error: ${error.message}")
-
-                // Log cause if available
-                Log.e("LoginError", "Error Cause: ${error.cause?.message}")
-
-                // Log network response details if available
-                error.networkResponse?.let { networkResponse ->
-                    Log.e("LoginError", "Status Code: ${networkResponse.statusCode}")
-                    Log.e("LoginError", "Response Data: ${String(networkResponse.data)}")
-                }
-
-                // In case of a network timeout or other unknown errors
-                if (error is TimeoutError) {
-                    Log.e("LoginError", "Network Timeout")
-                } else if (error is NoConnectionError) {
-                    Log.e("LoginError", "No Connection")
-                }
-
-                // Return failure result
-                onResult(false)
-            }
-        ) {
-            override fun getParams(): MutableMap<String, String> {
-                val params = mutableMapOf<String, String>()
-                params["email"] = email
-                params["password"] = password
-                return params
-            }
-        }
-
-        // Adding the request to the queue
-        VolleyHelper.getInstance(context).addToRequestQueue(stringRequest)
     }
 }
 

@@ -6,11 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -40,10 +34,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.example.vent.network.UserApiService
+import com.example.vent.utils.AnimationUtils
 
 data class User(
     val id: Int,
@@ -54,6 +47,7 @@ data class User(
 
 class PendingUsersFragment : Fragment() {
 
+    private var users by mutableStateOf(emptyList<User>())
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -62,7 +56,6 @@ class PendingUsersFragment : Fragment() {
 
         return ComposeView(requireContext()).apply {
             setContent {
-                var users by remember { mutableStateOf(emptyList<User>()) }
                 val context = LocalContext.current
                 var isLoading by remember { mutableStateOf(true) }
                 var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -94,53 +87,6 @@ class PendingUsersFragment : Fragment() {
     }
 
     @Composable
-    fun LoadingScreen() {
-        val transition = rememberInfiniteTransition()
-
-        // Animate the alpha (opacity) for a fade-in/out effect
-        val alpha by transition.animateFloat(
-            initialValue = 0.3f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(800),
-                repeatMode = RepeatMode.Reverse
-            )
-        )
-
-        // Animate scale for a slight bouncing effect
-        val scale by transition.animateFloat(
-            initialValue = 0.9f,
-            targetValue = 1.1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(800),
-                repeatMode = RepeatMode.Reverse
-            )
-        )
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            CircularProgressIndicator(
-                color = colorResource(R.color.blue),
-                strokeWidth = 5.dp,
-                modifier = Modifier
-                    .size(60.dp)
-                    .scale(scale)  // Smooth scaling animation
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Fetching pending users...",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Gray.copy(alpha = alpha),  // Smooth fade-in effect
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-
-    @Composable
     fun PendingUsersScreen(users: List<User>, isLoading: Boolean, errorMessage: String?) {
         Column(
             modifier = Modifier
@@ -152,12 +98,12 @@ class PendingUsersFragment : Fragment() {
         ) {
             when {
                 isLoading -> {
-                    LoadingScreen()
+                    AnimationUtils.LoadingScreen()
                 }
                 errorMessage != null -> {
                     Text(
                         text = errorMessage,
-                        color = Color.Red,
+                        color = Color.Black,
                         fontSize = 16.sp,
                         modifier = Modifier.padding(8.dp)
                     )
@@ -172,6 +118,7 @@ class PendingUsersFragment : Fragment() {
                     )
                 }
 
+                // TODO: When user scrolls down on the card list, refresh the page
                 else -> {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         items(users.size) { index ->
@@ -186,11 +133,11 @@ class PendingUsersFragment : Fragment() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun PendingUserCard(
-        user: User
+        user: User,
     ) {
 
         var expanded by remember { mutableStateOf(false) }
-        var selectedRole by remember { mutableStateOf("Set Role") }
+        var selectedRole by remember { mutableStateOf<String?>(null) }
 
         Column(
             modifier = Modifier
@@ -258,7 +205,7 @@ class PendingUsersFragment : Fragment() {
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
-                                    Text(text = selectedRole, color = Color.Black)
+                                    Text(text = selectedRole ?: "Set Role", color = Color.Black)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Icon(
                                         imageVector = Icons.Default.ArrowDropDown,
@@ -285,88 +232,129 @@ class PendingUsersFragment : Fragment() {
                             }
                         }
 
+                        // Buttons
                         Row(
                             modifier = Modifier
                                 .padding(top = 25.dp)
                                 .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
+                            var isAcceptButtonLoading by remember { mutableStateOf(false) }
+                            var isRejectButtonLoading by remember { mutableStateOf(false) }
+
+                            // Accept Button
                             Button(
                                 onClick = {
-//                                    UserApiService.acceptUser(
-//                                        context = context,
-//                                        email = user.email,
-//                                        password = user.password, // Assuming `password` is stored in the user object
-//                                        role = selectedRole,
-//                                        onSuccess = {
-//                                            isLoading = false  // Re-enable button
-//                                            users = users - user  // Remove user from list
-//                                            Toast.makeText(context, "User accepted!", Toast.LENGTH_SHORT).show()
-//                                        },
-//                                        onError = { errorMessage ->
-//                                            isLoading = false  // Re-enable button
-//                                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-//                                        }
-//                                    )
+                                    isAcceptButtonLoading = true
+
+                                    UserApiService.acceptUser(
+                                        context = context,
+                                        requestId = user.id,
+                                        role = selectedRole.toString().lowercase(),
+                                        onSuccess = {
+                                            isAcceptButtonLoading = false
+                                            users = users - user
+                                            Toast.makeText(context, "User approved!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        onError = { errorMessage ->
+                                            isAcceptButtonLoading = false
+                                            Log.e("PendingUsersFragment", errorMessage)
+                                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
                                 },
                                 modifier = Modifier
                                     .width(120.dp)
-                                    .height(60.dp), // Adjust width as needed
-                                enabled = selectedRole != "Set Role", // Keeps it disabled
-                                shape = RoundedCornerShape(8.dp), // Adds 8dp border radius
+                                    .height(60.dp),
+                                enabled = !isAcceptButtonLoading && selectedRole != null,
+                                shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF7EFFDB), // Corrected syntax
+                                    containerColor = Color(0xFF7EFFDB),
                                     disabledContainerColor = Color(0xFF9C9C9C)
                                 ),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp) // Space between icon and text
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check, // Tick Icon
-                                        contentDescription = "Accept",
-                                        tint = Color.Black
-                                    )
-                                    Text(
-                                        text = "Accept",
-                                        color = Color.Black,
-                                        maxLines = 1
-                                    ) // Button text
-                                }
-                            }
-                            Button(
-                                onClick = { /* Handle click */ },
-                                modifier = Modifier
-                                    .wrapContentWidth()
-                                    .height(60.dp), // Adjust width as needed
-                                enabled = selectedRole != "Set Role", // Keeps it disabled
-                                shape = RoundedCornerShape(8.dp), // Adds 8dp border radius
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFFF7F7A), // Corrected syntax
-                                    disabledContainerColor = Color(0xFF9C9C9C)
-                                )
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Accept",
-                                        tint = Color.Black
+                                    if (isAcceptButtonLoading) {
+                                        AnimationUtils.AcceptButtonLoaderGlow(modifier = Modifier.fillMaxSize())
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Accept",
+                                            tint = Color.Black
+                                        )
+                                        Text(
+                                            text = "Accept",
+                                            color = Color.Black,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Reject Button
+                            Button(
+                                onClick = {
+                                    isRejectButtonLoading = true
+
+                                    UserApiService.rejectUser(
+                                        context = context,
+                                        requestId = user.id,
+                                        onSuccess = {
+                                            isRejectButtonLoading = false
+                                            users = users - user
+                                            Toast.makeText(context, "User rejected!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        onError = { errorMessage ->
+                                            isRejectButtonLoading = false
+                                            Log.e("PendingUsersFragment", errorMessage)
+                                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                        }
                                     )
-                                    Text(
-                                        text = "Reject",
-                                        color = Color.Black,
-                                        maxLines = 1
-                                    )
+                                },
+                                modifier = Modifier
+                                    .width(120.dp)
+                                    .height(60.dp), // Adjust width as needed
+                                enabled = true,
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFFF7F7A),
+                                    disabledContainerColor = Color(0xFF9C9C9C)
+                                ),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isRejectButtonLoading) {
+                                        AnimationUtils.RejectButtonLoaderGlow(
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    } else {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Reject",
+                                                tint = Color.Black
+                                            )
+                                            Text(
+                                                text = "Reject",
+                                                color = Color.Black,
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-
                 }
             }
         }

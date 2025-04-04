@@ -12,31 +12,36 @@ exports.getPendingUsers = (req, res) => {
 };
 
 exports.approveUser = (req, res) => {
-  const { request_id } = req.body;
+  const { request_id, role } = req.body;
 
-  if (!request_id) {
-    return res.status(400).json({ message: "Request ID is required" });
+  if (!request_id || !role) {
+    return res.status(400).json({ message: "Request ID and role are required" });
   }
 
   const getUserQry = "SELECT * FROM pending_users WHERE request_id = ?";
   connection.query(getUserQry, [request_id], (err, results) => {
+    if (err) {
+      console.error("Error fetching pending user:", err);
+      return res.status(500).json({ message: "Database error while fetching user" });
+    }
     if (err || results.length === 0) {
       return res.status(404).json({ message: "No pending user found" });
     }
 
-    const { email, password_hash, role_requested } = results[0];
+    const { email, password_hash } = results[0];
 
     const insertUserQry =
-      "INSERT INTO vent_users (email, password_hash, role) VALUES (?, ?, ?)";
+      "INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)";
 
     connection.query(
       insertUserQry,
-      [email, password_hash, role_requested],
+      [email, password_hash, role],
       (err) => {
         if (err) {
+          console.error("Error inserting user into users:", err);
           return res
             .status(500)
-            .json({ message: "Error inserting user into vent_users" });
+            .json({ message: "Error inserting user into users" });
         }
 
         const deleteQry = "DELETE FROM pending_users WHERE request_id = ?";
@@ -62,11 +67,35 @@ exports.rejectUser = (req, res) => {
     return res.status(400).json({ message: "Request ID is required" });
   }
 
-  const deleteQry = "DELETE FROM pending_users WHERE request_id = ?";
-  connection.query(deleteQry, [request_id], (err, results) => {
-    if (err || results.affectedRows === 0) {
+  const getUserQry = "SELECT * FROM pending_users WHERE request_id = ?";
+  connection.query(getUserQry, [request_id], (err, results) => {
+    if (err) {
+      console.error("Error fetching pending user:", err);
+      return res.status(500).json({ message: "Database error while fetching user" });
+    }
+
+    if (results.length === 0) {
       return res.status(404).json({ message: "No pending user found" });
     }
-    res.status(200).json({ message: "User request rejected successfully" });
+
+    const { email, password_hash, role } = results[0];
+
+    const insertUserQry =
+      "INSERT INTO rejected_users (email, password_hash) VALUES (?, ?)";
+    connection.query(insertUserQry, [email, password_hash, role], (err) => {
+      if (err) {
+        console.error("Error inserting user into rejected_users:", err);
+        return res.status(500).json({ message: "Error inserting user into rejected_users" });
+      }
+
+      const deleteQry = "DELETE FROM pending_users WHERE request_id = ?";
+      connection.query(deleteQry, [request_id], (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error deleting pending user" });
+        }
+
+        res.status(200).json({ message: "User rejected and moved successfully" });
+      });
+    });
   });
 };
