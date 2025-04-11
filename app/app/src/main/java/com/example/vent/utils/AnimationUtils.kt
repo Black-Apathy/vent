@@ -4,6 +4,9 @@ package com.example.vent.utils  // Cleaned up the double package path
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,13 +26,18 @@ import androidx.compose.ui.unit.sp
 import com.example.vent.R
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
 import kotlinx.coroutines.delay
 
 object AnimationUtils {
@@ -201,32 +209,75 @@ object AnimationUtils {
         }
     }
 
-//    @Composable
-//    fun SlideOutOnAccept(
-//        isVisible: Boolean,
-//        onRemoved: () -> Unit,
-//        content: @Composable () -> Unit
-//    ) {
-//        val scope = rememberCoroutineScope()
-//        val animatedVisible = remember { mutableStateOf(isVisible) }
-//
-//        // Trigger animation when isVisible becomes false
-//        LaunchedEffect(isVisible) {
-//            if (!isVisible) {
-//                delay(300)  // match animation duration
-//                onRemoved()
-//            }
-//        }
-//
-//        AnimatedVisibility(
-//            visible = animatedVisible.value,
-//            exit = slideOutHorizontally(
-//                targetOffsetX = { it },  // slide to right
-//                animationSpec = tween(durationMillis = 300)
-//            )
-//        ) {
-//            content()
-//        }
-//    }
+    @Composable
+    fun SlideInCard(
+        modifier: Modifier = Modifier,
+        delayMillis: Int = 0,
+        content: @Composable () -> Unit
+    ) {
+        val offsetY by animateDpAsState(
+            targetValue = 0.dp,
+            animationSpec = tween(durationMillis = 500, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+            label = "slideInOffset"
+        )
+
+        var visible by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            visible = true
+        }
+
+        AnimatedVisibility(
+            visible = visible,
+            enter = slideInVertically(
+                initialOffsetY = { it / 2 }, // From below
+                animationSpec = tween(2000)
+            ) + fadeIn(tween(2500)),
+            exit = fadeOut()
+        ) {
+            Card(
+                modifier = modifier
+                    .offset(y = offsetY)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                content()
+            }
+        }
+    }
+
+    @Composable
+    fun StaggeredTextFadeIn(
+        textsWithStyle: List<Pair<String, TextStyle>>,
+        delayBetween: Int = 200
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            textsWithStyle.forEachIndexed { index, (text, style) ->
+                var visible by remember { mutableStateOf(false) }
+
+                LaunchedEffect(Unit) {
+                    delay(index * delayBetween.toLong())
+                    visible = true
+                }
+
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn(tween(500)),
+                    exit = fadeOut()
+                ) {
+                    Text(
+                        text = text,
+                        style = style,
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+
 
 }

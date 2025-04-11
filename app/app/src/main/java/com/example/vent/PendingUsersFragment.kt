@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +45,8 @@ data class User(
     val password: String,
     val createdAt: String
 )
+
+// TODO: Notification system for pending users
 
 class PendingUsersFragment : Fragment() {
 
@@ -81,13 +84,54 @@ class PendingUsersFragment : Fragment() {
                     users = users,
                     isLoading = isLoading,
                     errorMessage = errorMessage,
+                    onRefresh = {
+                        isLoading = true
+                        UserApiService.fetchPendingUsers(
+                            context,
+                            onSuccess = { fetchedUsers ->
+                                users = fetchedUsers
+                                isLoading = false
+                                errorMessage = null
+                            },
+                            onError = { error ->
+                                isLoading = false
+                                errorMessage = error
+                                Log.e("PendingUsersFragment", error)
+                                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+
                 )
             }
         }
     }
 
+
+    // Scroll Down Refresh
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun PendingUsersScreen(users: List<User>, isLoading: Boolean, errorMessage: String?) {
+    fun PullToRefreshBasicSample(
+        items: List<User>,
+        isRefreshing: Boolean,
+        onRefresh: () -> Unit,
+        modifier: Modifier = Modifier
+    ) {
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            modifier = modifier
+        ) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(users.size) { index ->
+                    PendingUserCard(users[index])  // Correct way to pass user
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun PendingUsersScreen(users: List<User>, isLoading: Boolean, errorMessage: String?, onRefresh: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -118,13 +162,15 @@ class PendingUsersFragment : Fragment() {
                     )
                 }
 
-                // TODO: When user scrolls down on the card list, refresh the page
                 else -> {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        items(users.size) { index ->
-                            PendingUserCard(users[index])  // Correct way to pass user
-                        }
-                    }
+                    PullToRefreshBasicSample(
+                        items = users,
+                        isRefreshing = isLoading,
+                        onRefresh = onRefresh,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = colorResource(R.color.cream))
+                    )
                 }
             }
         }

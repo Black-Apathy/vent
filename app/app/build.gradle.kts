@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.volley)
     implementation(libs.material)
+    implementation(libs.material3)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.androidx.foundation.android)
@@ -61,6 +62,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.ui)
     implementation(libs.ui.graphics)
     implementation(libs.androidx.compose.ui.ui.tooling.preview)
+    implementation ("com.airbnb.android:lottie-compose:6.1.0")
     implementation("androidx.compose.material3:material3:1.3.1")
     // Volley
     implementation(libs.volley) // Use the latest version
@@ -68,6 +70,6 @@ dependencies {
     implementation(libs.androidx.core.ktx.v1130)
     // required, else it doesn't work at all.
     implementation("androidx.work:work-runtime:2.10.0")
-
-
+    // Glassmorphism
+    implementation("dev.chrisbanes.haze:haze-jetpack-compose:0.4.1")
 }

@@ -196,10 +196,9 @@ class LoginActivity : ComponentActivity() {
                                 UserApiService.signupUser(context, email, password) { isSuccess ->
                                     isLoading = false
                                     if (isSuccess) {
-                                        // If successful, navigate to MainActivity (XML-based)
-                                        val intent = Intent(context, MainActivity::class.java)
+                                        val intent = Intent(context, AwaitingApprovalActivity::class.java)
                                         context.startActivity(intent)
-                                        // Optionally, finish the LoginActivity to prevent user from going back
+                                        (context as? Activity)?.finish()
                                         (context as? Activity)?.finish()
                                     } else {
                                         // Show error (optional)
