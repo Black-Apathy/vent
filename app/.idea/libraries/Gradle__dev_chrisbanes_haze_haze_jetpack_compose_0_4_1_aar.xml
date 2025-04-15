@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="Gradle: dev.chrisbanes.haze:haze-jetpack-compose:0.4.1@aar" external-system-id="GRADLE">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/8.11.1/transforms/90b6654367ce3738bd4fc0de5670e939/transformed/jetified-haze-jetpack-compose-0.4.1/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/8.11.1/transforms/90b6654367ce3738bd4fc0de5670e939/transformed/jetified-haze-jetpack-compose-0.4.1/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/8.11.1/transforms/90b6654367ce3738bd4fc0de5670e939/transformed/jetified-haze-jetpack-compose-0.4.1/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/dev.chrisbanes.haze/haze-jetpack-compose/0.4.1/5cd121d5d859ee9ff020a9b61e7aba88bb3e1bd8/haze-jetpack-compose-0.4.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/dev.chrisbanes.haze/haze-jetpack-compose/0.4.1/b2961a4c096847c69b46805247fa9b8a8648499c/haze-jetpack-compose-0.4.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
