@@ -62,8 +62,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.ui)
     implementation(libs.ui.graphics)
     implementation(libs.androidx.compose.ui.ui.tooling.preview)
-    implementation ("com.airbnb.android:lottie-compose:6.1.0")
+    implementation("com.airbnb.android:lottie-compose:6.1.0")
     implementation("androidx.compose.material3:material3:1.3.1")
+    implementation("androidx.compose.material:material-icons-extended")
     // Volley
     implementation(libs.volley) // Use the latest version
     //Core KTX

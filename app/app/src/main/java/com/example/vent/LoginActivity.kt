@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,13 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.volley.NoConnectionError
-import com.android.volley.Response
-import com.android.volley.TimeoutError
-import com.android.volley.toolbox.StringRequest
-import com.example.vent.network.ApiConstants
 import com.example.vent.network.UserApiService
-import com.example.vent.network.VolleyHelper
 
 val interFontFamily = FontFamily(
     Font(R.font.inter_24_regular, FontWeight.Normal),
@@ -193,17 +189,29 @@ class LoginActivity : ComponentActivity() {
                         onClick = {
                             if (isFormValid) {
                                 isLoading = true
-                                UserApiService.signupUser(context, email, password) { isSuccess ->
-                                    isLoading = false
-                                    if (isSuccess) {
-                                        val intent = Intent(context, AwaitingApprovalActivity::class.java)
+                                // First, check if the user already exists using the email
+                                UserApiService.checkUserStatus(context, email) { status, role ->
+//                                    Log.d("StatusCheck", "Status: $status, Role: $role")
+
+                                    if (status == "approved" && role == "admin") {
+                                        // If the user is approved and an admin, navigate to MainActivity
+                                        val intent = Intent(context, MainActivity::class.java)
                                         context.startActivity(intent)
-                                        (context as? Activity)?.finish()
-                                        (context as? Activity)?.finish()
+                                        (context as? Activity)?.finish()  // Finish current activity
                                     } else {
-                                        // Show error (optional)
-                                        Toast.makeText(context, "Login Failed", Toast.LENGTH_SHORT)
-                                            .show()
+                                        // If the user does not exist or is not approved yet, proceed with the signup process
+                                        UserApiService.signupUser(context, email, password) { isSuccess ->
+                                            isLoading = false
+//                                            Log.d("SignupResponse", "Is Success: $isSuccess")
+                                            if (isSuccess) {
+                                                val intent = Intent(context, AwaitingApprovalActivity::class.java)
+                                                context.startActivity(intent)
+                                                (context as? Activity)?.finish()
+                                            } else {
+                                                // If signup failed
+                                                Toast.makeText(context, "Signup Failed", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -259,6 +267,7 @@ class LoginActivity : ComponentActivity() {
     ) {
         var input by remember { mutableStateOf("") }
         var isValid by remember { mutableStateOf(false) }
+        var passwordVisible by remember { mutableStateOf(false) }
         val primaryBlue = Color(0xFF003366)
 
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
@@ -276,13 +285,23 @@ class LoginActivity : ComponentActivity() {
             singleLine = true,
             visualTransformation = if (isPasswordField) PasswordVisualTransformation() else VisualTransformation.None,
             trailingIcon = {
-                if (input.isNotEmpty()) {
+                if (isPasswordField && input.isNotEmpty()) {
+                    // If it's a password field and the input is not empty, show the eye icon to toggle visibility
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = "Toggle Password Visibility"
+                        )
+                    }
+                } else if (input.isNotEmpty()) {
+                    // Otherwise, show the validation icon (check or close)
                     Icon(
                         imageVector = if (isValid) Icons.Filled.Check else Icons.Filled.Close,
                         contentDescription = if (isValid) "Valid Input" else "Invalid Input",
                         tint = if (isValid) Color.Green else Color.Red
                     )
                 }
+
             },
             onValueChange = { newValue ->
                 input = newValue

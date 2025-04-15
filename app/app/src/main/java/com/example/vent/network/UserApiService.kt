@@ -20,6 +20,29 @@ import org.json.JSONObject
 
 object UserApiService {
 
+    fun checkUserStatus(context: Context, email: String, onResult: (String, String) -> Unit) {
+        val url = "${ApiConstants.CHECK_STATUS_URL}?email=$email"
+        val request = StringRequest(
+            Request.Method.GET, url,
+            { response ->
+                try {
+                    val json = JSONObject(response)
+                    val status = json.optString("status", "pending")
+                    val role = json.optString("role", "unknown")
+                    onResult(status, role)
+                } catch (e: JSONException) {
+                    Log.e("StatusCheck", "JSON parsing error", e)
+                    onResult("error", "unknown")
+                }
+            },
+            { error ->
+                Log.e("StatusCheck", "Error fetching status", error)
+                onResult("error", "unknown")
+            }
+        )
+        VolleyHelper.getInstance(context).addToRequestQueue(request)
+    }
+
     fun signupUser(context: Context, email: String, password: String, onResult: (Boolean) -> Unit) {
         val url = ApiConstants.LOGIN_URL
         val stringRequest = object : StringRequest(
