@@ -283,14 +283,18 @@ class LoginActivity : ComponentActivity() {
             label = { Text(fieldLabel) },
             leadingIcon = { Icon(imageVector = leadingIcon, contentDescription = iconDescription) },
             singleLine = true,
-            visualTransformation = if (isPasswordField) PasswordVisualTransformation() else VisualTransformation.None,
+            visualTransformation = when {
+                isPasswordField && !passwordVisible -> PasswordVisualTransformation()
+                else -> VisualTransformation.None
+            },
             trailingIcon = {
                 if (isPasswordField && input.isNotEmpty()) {
                     // If it's a password field and the input is not empty, show the eye icon to toggle visibility
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            contentDescription = "Toggle Password Visibility"
+                            contentDescription =
+                                "Toggle Password Visibility"
                         )
                     }
                 } else if (input.isNotEmpty()) {
