@@ -43,7 +43,6 @@ exports.approveUser = (req, res) => {
             .status(500)
             .json({ message: "Error inserting user into users" });
         }
-
         const deleteQry = "DELETE FROM pending_users WHERE request_id = ?";
         connection.query(deleteQry, [request_id], (err) => {
           if (err) {

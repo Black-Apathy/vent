@@ -2,14 +2,29 @@ const express = require("express");
 const {
   submitData,
   getData,
+  getEventById,
+  deleteEvent,
+  updateEvent
 } = require("../controllers/ventController");
+const authenticateToken = require("../middlewares/authenticateToken");
+const authorizeRoles = require("../middlewares/authorizeRoles");
 
 const router = express.Router();
 
-// POST route to submit data
-router.post("/submit", submitData);
+// POST route to create a new event
+router.post("/events", authenticateToken, authorizeRoles("admin", "teacher"), submitData);
 
-// GET route to retrieve data
-router.get("/data", getData);
+// GET route to fetch all events
+router.get("/events", getData);
+
+// Route to get a single event by ID
+router.get("/events/:id", getEventById);
+
+// DELETE route to delete an event by ID
+router.delete("/events/:event_id", authenticateToken, authorizeRoles("admin", "teacher"), deleteEvent);
+
+// PATCH route to update event partially by ID
+router.patch("/events/:event_id", authenticateToken, authorizeRoles("admin", "teacher"), updateEvent);
+
 
 module.exports = router;

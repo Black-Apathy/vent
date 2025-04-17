@@ -1,6 +1,8 @@
 const connection = require("../db");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const { generateTokens } = require("../utils/tokenUtils");
 
 exports.registerUser = async (req, res) => {
   const { email, password } = req.body;
@@ -85,7 +87,7 @@ exports.handleLogin = async (req, res) => {
   console.log("Received password:", password);
 
   // First, check user status in the users table
-  const statusQuery = "SELECT user_id, email, role, password_hash FROM users WHERE email = ?";
+  const statusQuery = "SELECT user_id, email, role, password_hash, approved_date FROM users WHERE email = ?";
   try {
     console.log("Executing status query for email:", email);
     const results = await new Promise((resolve, reject) => {
@@ -108,6 +110,12 @@ exports.handleLogin = async (req, res) => {
     const user = results[0];
     console.log("User found:", user);
 
+    // Check if the user is approved
+    if (!user.approved_date) {
+      console.log("User is not approved yet:", user.email);
+      return res.status(403).json({ message: "User not approved by admin" });
+    }
+
     // Compare the provided password with the stored hashed password
     console.log("Comparing passwords...");
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -118,21 +126,7 @@ exports.handleLogin = async (req, res) => {
 
     console.log("Password match successful.");
 
-    // Generate the access token (JWT)
-    const accessToken = jwt.sign(
-      { user_id: user.user_id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-    console.log("Access token generated:", accessToken);
-
-    // Generate the refresh token (JWT)
-    const refreshToken = jwt.sign(
-      { email: user.email },
-      process.env.REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
-    console.log("Generated refresh token:", refreshToken);
+    const { accessToken, refreshToken } = generateTokens(user);
 
     // Store refresh token in DB
     const storeTokenQry = "UPDATE users SET refresh_token = ? WHERE email = ?";
@@ -176,3 +170,41 @@ exports.handleLogin = async (req, res) => {
   }
 };
 
+exports.refreshToken = (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token missing" });
+  }
+
+  // Verify the refresh token signature & expiry
+  jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid or expired refresh token" });
+    }
+
+    const email = decoded.email;
+
+    const query = "SELECT user_id, email, role FROM users WHERE refresh_token = ?";
+    connection.query(query, [refreshToken], (err, results) => {
+      if (err || results.length === 0) {
+        return res.status(403).json({ message: "Refresh token not found or already rotated" });
+      }
+
+      const user = results[0]; // has user_id, email, role
+      const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+
+      const updateQuery = "UPDATE users SET refresh_token = ? WHERE user_id = ?";
+      connection.query(updateQuery, [newRefreshToken, user.user_id], (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error updating refresh token in DB" });
+        }
+
+        res.json({
+          accessToken,
+          refreshToken: newRefreshToken,
+        });
+      });
+    });
+  });
+};
