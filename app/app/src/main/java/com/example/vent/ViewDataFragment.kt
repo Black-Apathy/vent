@@ -33,6 +33,8 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
+import com.example.vent.network.ApiConstants
+import com.example.vent.network.UserApiService.viewEvents
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -91,52 +93,38 @@ class ViewDataFragment : Fragment() {
     }
 
     private fun fetchEvents() {
-        val url = "https://rgtafc-ip-152-58-2-57.tunnelmole.net/data"
+        // Show loading
+        progressBar?.visibility = View.VISIBLE
+        progressText?.visibility = View.VISIBLE
+        progressText?.text = "Fetching data, please wait..."
 
         context?.let { ctx ->
-            requestQueue = Volley.newRequestQueue(ctx)
-
-            // Show loading indicator safely
-            progressBar?.visibility = View.VISIBLE
-            progressText?.visibility = View.VISIBLE
-            progressText?.text = "Fetching data, please wait..."
-
-            // Check for internet connection
             if (!isInternetAvailable(ctx)) {
                 progressBar?.visibility = View.GONE
                 progressText?.text = "No internet connection. Please check your network."
                 return
             }
 
-            val jsonArrayRequest = JsonArrayRequest(
-                Request.Method.GET, url, null,
-                { response: JSONArray ->
-                    if (isAdded) {
-                        progressBar?.visibility = View.GONE
+            // Use your API wrapper
+            viewEvents(ctx) { success, result ->
+                if (!isAdded) return@viewEvents
+
+                progressBar?.visibility = View.GONE
+
+                if (success) {
+                    try {
+                        val response = JSONArray(result)
                         progressText?.visibility = View.GONE
                         updateEventList(response)
+                    } catch (e: Exception) {
+                        progressText?.text = "Unexpected data format."
+                        Log.e("ViewDataFragment", "Error parsing JSONArray", e)
                     }
-                },
-                { error ->
-                    if (isAdded) {
-                        progressBar?.visibility = View.GONE
-                        progressText?.text = when (error.networkResponse?.statusCode) {
-                            404 -> "Server not found (404). Please try again later."
-                            500 -> "Server error (500). Contact support."
-                            else -> "Failed to load data. Server might be down or unreachable."
-                        }
-                        Toast.makeText(context, "Error: ${error.message}", Toast.LENGTH_LONG).show()
-                    }
+                } else {
+                    progressText?.text = result // show the error string
+                    Toast.makeText(ctx, result, Toast.LENGTH_LONG).show()
                 }
-            )
-
-            jsonArrayRequest.retryPolicy = DefaultRetryPolicy(
-                5000, // 5-second timeout
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            )
-
-            requestQueue?.add(jsonArrayRequest)
+            }
         }
     }
 

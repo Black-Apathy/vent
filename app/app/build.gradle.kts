@@ -71,6 +71,6 @@ dependencies {
     implementation(libs.androidx.core.ktx.v1130)
     // required, else it doesn't work at all.
     implementation("androidx.work:work-runtime:2.10.0")
-    // Glassmorphism
-    implementation("dev.chrisbanes.haze:haze-jetpack-compose:0.4.1")
+    implementation("androidx.security:security-crypto:1.0.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
 }

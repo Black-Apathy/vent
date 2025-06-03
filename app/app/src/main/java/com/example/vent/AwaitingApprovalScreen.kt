@@ -22,7 +22,6 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.compose.runtime.getValue
 import com.example.vent.utils.AnimationUtils
-import dev.chrisbanes.haze.haze
 
 
 class AwaitingApprovalActivity : ComponentActivity() {

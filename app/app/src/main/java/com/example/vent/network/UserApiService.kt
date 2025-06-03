@@ -14,11 +14,37 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.example.vent.User
+import com.example.vent.com.example.vent.utils.AuthTokenProvider
+import com.example.vent.com.example.vent.utils.SessionManager
+import com.example.vent.utils.SecurePrefs
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
 object UserApiService {
+
+    fun viewEvents(context: Context, onResult: (Boolean, String) -> Unit) {
+        val url = ApiConstants.VIEW_EVENTS
+
+        val request = StringRequest(
+            Request.Method.GET, url,
+            { response ->
+                try {
+                    val jsonArray = JSONArray(response)
+                    onResult(true, jsonArray.toString())
+                } catch (e: JSONException) {
+                    Log.e("ViewEvents", "JSON parsing error", e)
+                    onResult(false, "Invalid response format")
+                }
+            },
+            { error ->
+                Log.e("ViewEvents", "Network error", error)
+                onResult(false, "Network error: ${error.message}")
+            }
+        )
+
+        VolleyHelper.getInstance(context).addToRequestQueue(request)
+    }
 
     fun checkUserStatus(context: Context, email: String, onResult: (String, String) -> Unit) {
         val url = "${ApiConstants.CHECK_STATUS_URL}?email=$email"
@@ -44,35 +70,35 @@ object UserApiService {
     }
 
     fun signupUser(context: Context, email: String, password: String, onResult: (Boolean) -> Unit) {
-        val url = ApiConstants.LOGIN_URL
+        val url = ApiConstants.REGISTER_URL
         val stringRequest = object : StringRequest(
             Method.POST, url,
             Response.Listener { response ->
                 // Handle response here
                 // You can parse the response if needed
-                Log.d("LoginResponse", response)
+                Log.d("SignUpResponse", response)
 
                 // If login is successful, return true
                 onResult(true)
             },
             Response.ErrorListener { error ->
                 // Log basic error message
-                Log.e("LoginError", "Error: ${error.message}")
+                Log.e("SignUpError", "Error: ${error.message}")
 
                 // Log cause if available
-                Log.e("LoginError", "Error Cause: ${error.cause?.message}")
+                Log.e("SignUpError", "Error Cause: ${error.cause?.message}")
 
                 // Log network response details if available
                 error.networkResponse?.let { networkResponse ->
-                    Log.e("LoginError", "Status Code: ${networkResponse.statusCode}")
-                    Log.e("LoginError", "Response Data: ${String(networkResponse.data)}")
+                    Log.e("SignUpError", "Status Code: ${networkResponse.statusCode}")
+                    Log.e("SignUpError", "Response Data: ${String(networkResponse.data)}")
                 }
 
                 // In case of a network timeout or other unknown errors
                 if (error is TimeoutError) {
-                    Log.e("LoginError", "Network Timeout")
+                    Log.e("SignUpError", "Network Timeout")
                 } else if (error is NoConnectionError) {
-                    Log.e("LoginError", "No Connection")
+                    Log.e("SignUpError", "No Connection")
                 }
 
                 // Return failure result
@@ -91,21 +117,116 @@ object UserApiService {
         VolleyHelper.getInstance(context).addToRequestQueue(stringRequest)
     }
 
+    fun loginUser(context: Context, email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        val url = ApiConstants.LOGIN_URL
+
+        val stringRequest = object : StringRequest(
+            Method.POST, url,
+            Response.Listener { response ->
+                try {
+                    val jsonResponse = JSONObject(response)
+                    val message = jsonResponse.getString("message")
+
+                    if (jsonResponse.has("accessToken") && jsonResponse.has("refreshToken")) {
+                        val accessToken = jsonResponse.getString("accessToken")
+                        val refreshToken = jsonResponse.getString("refreshToken")
+                        val role = jsonResponse.optString("role")
+
+                        AuthTokenProvider.saveTokens(context, accessToken, refreshToken)
+
+                        Log.d("LoginSuccess", "Message: $message")
+                        Log.d("LoginSuccess", "AccessToken: $accessToken")
+                        Log.d("LoginSuccess", "RefreshToken: $refreshToken")
+                        Log.d("LoginSuccess", "Role: $role")
+
+                        // Return true + token/role info
+                        onResult(true, "Role: $role")
+                    } else {
+                        Log.d("LoginFailure", "Login failed with message: $message")
+                        onResult(false, message)
+                    }
+                } catch (e: Exception) {
+                    Log.e("LoginError", "JSON parsing error: ${e.message}")
+                    onResult(false, "Invalid response from server")
+                }
+            },
+            Response.ErrorListener { error ->
+                Log.e("LoginError", "Error: ${error.message}")
+                error.networkResponse?.let { networkResponse ->
+                    val statusCode = networkResponse.statusCode
+                    val data = String(networkResponse.data)
+                    Log.e("LoginError", "Status Code: $statusCode")
+                    Log.e("LoginError", "Response Data: $data")
+
+                    val errorMsg = try {
+                        JSONObject(data).getString("message")
+                    } catch (e: Exception) {
+                        "Unexpected error"
+                    }
+
+                    val userFriendlyMsg = when (statusCode) {
+                        400 -> "Email and password required"
+                        401 -> "Invalid credentials"
+                        403 -> "User not approved"
+                        404 -> "User not found"
+                        500 -> "Server error"
+                        else -> errorMsg
+                    }
+
+                    onResult(false, userFriendlyMsg)
+                } ?: run {
+                    if (error is TimeoutError) {
+                        onResult(false, "Network timeout")
+                    } else if (error is NoConnectionError) {
+                        onResult(false, "No internet connection")
+                    } else {
+                        onResult(false, "Unknown error")
+                    }
+                }
+            }
+        ) {
+            override fun getParams(): MutableMap<String, String> {
+                return mutableMapOf(
+                    "email" to email,
+                    "password" to password
+                )
+            }
+
+            override fun getHeaders(): MutableMap<String, String> {
+                return mutableMapOf("Content-Type" to "application/x-www-form-urlencoded")
+            }
+        }
+
+        VolleyHelper.getInstance(context).addToRequestQueue(stringRequest)
+    }
+
     fun fetchPendingUsers(context: Context, onSuccess: (List<User>) -> Unit, onError: (String) -> Unit) {
+        if (SessionManager.shouldForceLogout(context)) {
+            onError("Session expired. Please log in again.")
+            return
+        }
+
         val url = ApiConstants.FETCH_PENDING_USERS_URL
 
-        val request = JsonArrayRequest(
-            Request.Method.GET, url, null,
-            { response: JSONArray ->
+        // ✅ Get the secure access token
+        val accessToken = AuthTokenProvider.getAccessToken(context)
+
+        if (accessToken.isNullOrEmpty()) {
+            onError("Access token is missing. Please log in again.")
+            return
+        }
+
+        val request = object : JsonArrayRequest(Method.GET, url, null,
+            Response.Listener { response ->
                 try {
                     val userList = mutableListOf<User>()
                     for (i in 0 until response.length()) {
-                        val userJson: JSONObject = response.getJSONObject(i)
+                        val userJson = response.getJSONObject(i)
                         val user = User(
                             id = userJson.getInt("request_id"),
                             email = userJson.getString("email"),
                             password = userJson.getString("password_hash"),
-                            createdAt = userJson.getString("request_date"),
+                            createdAt = userJson.getString("request_date")
                         )
                         userList.add(user)
                     }
@@ -114,7 +235,7 @@ object UserApiService {
                     onError("Parsing error: ${e.message}")
                 }
             },
-            { error ->
+            Response.ErrorListener { error ->
                 val errorMessage = when (error) {
                     is TimeoutError -> "Request timed out. Please check your internet connection."
                     is NoConnectionError -> "No internet connection. Please try again later."
@@ -126,12 +247,24 @@ object UserApiService {
                 }
                 onError(errorMessage)
             }
-        )
+        ) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer $accessToken"
+                headers["Content-Type"] = "application/json"
+                return headers
+            }
+        }
 
         VolleyHelper.getInstance(context).addToRequestQueue(request)
     }
 
     fun acceptUser(context: Context?, requestId: Int, role: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (context == null || SessionManager.shouldForceLogout(context)) {
+            onError("Session expired. Please log in again.")
+            return
+        }
+
         val url = ApiConstants.ACCEPT_USER_URL
 
         val params = JSONObject().apply {
@@ -139,11 +272,11 @@ object UserApiService {
             put("role", role)
         }
 
-        val request = JsonObjectRequest(
-            Request.Method.POST, url, params,
+        val request = object : JsonObjectRequest(
+            Method.POST, url, params,
             { response ->
                 try {
-                    val message = response.getString("message")  // Backend sends message
+                    val message = response.getString("message")
                     if (message.contains("User approved", ignoreCase = true)) {
                         onSuccess()
                     } else {
@@ -156,20 +289,35 @@ object UserApiService {
             { error ->
                 onError("Network error: ${error.message}")
             }
-        )
+        ) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                val bearerToken = AuthTokenProvider.getBearerAccessToken(context)
+                if (bearerToken != null) {
+                    headers["Authorization"] = bearerToken
+                }
+                headers["Content-Type"] = "application/json"
+                return headers
+            }
+        }
 
         VolleyHelper.getInstance(context).addToRequestQueue(request)
     }
 
     fun rejectUser(context: Context?, requestId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (context == null || SessionManager.shouldForceLogout(context)) {
+            onError("Session expired. Please log in again.")
+            return
+        }
+
         val url = ApiConstants.REJECT_USER_URL
 
         val jsonBody = JSONObject().apply {
             put("request_id", requestId)
         }
 
-        val request = JsonObjectRequest(
-            Request.Method.POST,
+        val request = object : JsonObjectRequest(
+            Method.POST,
             url,
             jsonBody,
             { response ->
@@ -178,8 +326,19 @@ object UserApiService {
             { error ->
                 onError("Failed to reject: ${error.message ?: "Unknown error"}")
             }
-        )
+        ) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                val bearerToken = AuthTokenProvider.getBearerAccessToken(context)
+                if (bearerToken != null) {
+                    headers["Authorization"] = bearerToken
+                }
+                headers["Content-Type"] = "application/json"
+                return headers
+            }
+        }
 
         VolleyHelper.getInstance(context).addToRequestQueue(request)
     }
+
 }

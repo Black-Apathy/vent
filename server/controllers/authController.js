@@ -121,7 +121,7 @@ exports.handleLogin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       console.log("Invalid password for user:", user.email);
-      return res.status(401).json({ message: "Invalid password" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     console.log("Password match successful.");

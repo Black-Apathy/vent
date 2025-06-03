@@ -112,6 +112,7 @@ class LoginActivity : ComponentActivity() {
         val isFormValid = isEmailValid && isPasswordValid
 
         val context = LocalContext.current
+        val appContext = context.applicationContext
         var isLoading by remember { mutableStateOf(false) }
 
         // TODO: Add the animation for the sign up button to AnimationUtils.kt
@@ -190,17 +191,24 @@ class LoginActivity : ComponentActivity() {
                             if (isFormValid) {
                                 isLoading = true
                                 // First, check if the user already exists using the email
-                                UserApiService.checkUserStatus(context, email) { status, role ->
+                                UserApiService.checkUserStatus(appContext, email) { status, role ->
 //                                    Log.d("StatusCheck", "Status: $status, Role: $role")
 
                                     if (status == "approved" && role == "admin") {
-                                        // If the user is approved and an admin, navigate to MainActivity
-                                        val intent = Intent(context, MainActivity::class.java)
-                                        context.startActivity(intent)
-                                        (context as? Activity)?.finish()  // Finish current activity
+                                        UserApiService.loginUser(appContext, email, password) { loginSuccess, loginMessage ->
+                                            if (loginSuccess) {
+                                                // Navigate to MainActivity only if login is successful
+                                                val intent = Intent(context, MainActivity::class.java)
+                                                context.startActivity(intent)
+                                                (context as? Activity)?.finish()
+                                            } else {
+                                                // Show login failure message
+                                                Toast.makeText(context, "Login Failed: $loginMessage", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }// Finish current activity
                                     } else {
                                         // If the user does not exist or is not approved yet, proceed with the signup process
-                                        UserApiService.signupUser(context, email, password) { isSuccess ->
+                                        UserApiService.signupUser(appContext, email, password) { isSuccess ->
                                             isLoading = false
 //                                            Log.d("SignupResponse", "Is Success: $isSuccess")
                                             if (isSuccess) {
