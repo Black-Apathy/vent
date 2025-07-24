@@ -1,9 +1,12 @@
-const connection = require("../db");
+const db = require("../utils/dbUtils");
 const bcrypt = require("bcrypt");
-const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { generateTokens } = require("../utils/tokenUtils");
 
+/**
+ * Registers a new user by adding them to the pending_users table.
+ * Expects: email, password in req.body
+ */
 exports.registerUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -20,191 +23,247 @@ exports.registerUser = async (req, res) => {
     const mysql_qry =
       "INSERT INTO pending_users (email, password_hash) VALUES (?, ?)";
 
-    connection.query(
-      mysql_qry,
-      [email, hashedPassword],
-      (err) => {
-        if (err) {
-          console.error("Error inserting data into pending_users:", err);
-          return res
-            .status(500)
-            .json({ message: "Error inserting data into pending_users" });
-        }
-        res
-          .status(201)
-          .json({ message: "User registration request submitted successfully" });
-      }
-    );
-  }
-  catch (error) {
+    await db.query(mysql_qry, [email, hashedPassword]);
+    return res.status(201).json({ message: "Registration successful. Awaiting admin approval." });
+  } catch (error) {
     console.error("Error hashing password:", error);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-exports.checkUserStatus = (req, res) => {
+/**
+ * Checks the approval status of a user.
+ * Expects: email in req.query
+ */
+exports.checkUserStatus = async (req, res) => {
   const { email } = req.query;
 
   if (!email) {
-    return res.status(400).json({ message: "Email is required" });
+    return res.status(400).json({
+      success: false,
+      message: "Email is required"
+    });
   }
 
   const mysql_qry = "SELECT role, approved_date FROM users WHERE email = ?";
 
-  connection.query(mysql_qry, [email], (err, results) => {
-    if (err) {
-      console.error("Error fetching user status:", err);
-      return res.status(500).json({ message: "Error fetching user status" });
-    }
+  try {
+    const results = await db.query(mysql_qry, [email]);
 
     if (results.length > 0) {
       const user = results[0];
 
-      // Check if approved_date is not null (i.e., user is approved)
       if (user.approved_date) {
         return res.status(200).json({
+          success: true,
           status: "approved",
           role: user.role
         });
       } else {
-        return res.status(200).json({ status: "pending" });
+        return res.status(200).json({
+          success: true,
+          status: "pending"
+        });
       }
     } else {
-      return res.status(404).json({ status: "not_found" });
+      return res.status(404).json({
+        success: false,
+        status: "not_found",
+        message: "User not found"
+      });
     }
-  });
+  } catch (error) {
+    console.error("Error fetching user status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching user status"
+    });
+  }
 };
 
+/**
+ * Handles user login, checks credentials, and issues tokens.
+ * Expects: email, password in req.body
+ */
 exports.handleLogin = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    console.log("Error: Email or password missing");
-    return res.status(400).json({ message: "Email and password are required" });
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required"
+    });
   }
 
-  console.log("Received email:", email);
-  console.log("Received password:", password);
-
-  // First, check user status in the users table
-  const statusQuery = "SELECT user_id, email, role, password_hash, approved_date FROM users WHERE email = ?";
   try {
-    console.log("Executing status query for email:", email);
-    const results = await new Promise((resolve, reject) => {
-      connection.query(statusQuery, [email], (err, results) => {
-        if (err) {
-          console.error("Error executing status query:", err);
-          reject(err);
-        } else {
-          console.log("Status query results:", results);
-          resolve(results);
-        }
-      });
-    });
+    const statusQuery = `
+      SELECT user_id, email, role, password_hash, approved_date 
+      FROM users WHERE email = ?
+    `;
+    const results = await db.query(statusQuery, [email]);
 
     if (results.length === 0) {
-      console.log("No user found for email:", email);
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
     }
 
     const user = results[0];
-    console.log("User found:", user);
 
-    // Check if the user is approved
     if (!user.approved_date) {
-      console.log("User is not approved yet:", user.email);
-      return res.status(403).json({ message: "User not approved by admin" });
+      return res.status(403).json({
+        success: false,
+        message: "User not approved by admin"
+      });
     }
 
-    // Compare the provided password with the stored hashed password
-    console.log("Comparing passwords...");
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
-      console.log("Invalid password for user:", user.email);
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
 
-    console.log("Password match successful.");
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
 
     const { accessToken, refreshToken } = generateTokens(user);
 
-    // Store refresh token in DB
     const storeTokenQry = "UPDATE users SET refresh_token = ? WHERE email = ?";
-    try {
-      console.log("Executing refresh token update for email:", user.email);
-      const storeResult = await new Promise((resolve, reject) => {
-        connection.query(storeTokenQry, [refreshToken, user.email], (err, result) => {
-          if (err) {
-            console.error("Error executing refresh token update:", err);
-            reject(err);
-          } else {
-            console.log("Refresh token update result:", result);
-            resolve(result);
-          }
-        });
+
+    const storeResult = await db.query(storeTokenQry, [refreshToken, user.email]);
+
+    if (storeResult.affectedRows === 0) {
+      return res.status(500).json({
+        success: false,
+        message: "Error storing refresh token"
       });
-
-      if (storeResult.affectedRows === 0) {
-        console.error("Refresh token update failed. No rows affected.");
-        return res.status(500).json({ message: "Error storing refresh token" });
-      }
-
-      console.log("Refresh token successfully stored.");
-
-      // Send response after refresh token is successfully stored
-      return res.status(200).json({
-        message: "Login successful",
-        accessToken,
-        refreshToken,
-        role: user.role // Include the role here for frontend
-      });
-
-    } catch (err) {
-      console.error("Error while storing refresh token:", err);
-      return res.status(500).json({ message: "Error storing refresh token" });
     }
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      accessToken,
+      refreshToken,
+      role: user.role
+    });
 
   } catch (error) {
     console.error("Error during login process:", error);
-    return res.status(500).json({ message: "An error occurred during login" });
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred during login"
+    });
   }
 };
 
-exports.refreshToken = (req, res) => {
+/**
+ * Resets a user's password.
+ * Expects: email, newPassword in req.body
+ */
+exports.resetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  if (!email || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and new password are required"
+    });
+  }
+
+  try {
+    const userQuery = "SELECT user_id FROM users WHERE email = ?";
+    const results = await db.query(userQuery, [email]);
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    const SALT_ROUNDS = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    const updateQuery = "UPDATE users SET password_hash = ? WHERE email = ?";
+    const updateResult = await db.query(updateQuery, [hashedPassword, email]);
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(500).json({
+        success: false,
+        message: "Error updating password"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successful"
+    });
+
+  } catch (error) {
+    console.error("Error during forgot password process:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};
+
+/**
+ * Issues a new access token using a valid refresh token.
+ * Expects: refreshToken in req.body
+ */
+exports.refreshToken = async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-    return res.status(400).json({ message: "Refresh token missing" });
+    return res.status(400).json({
+      success: false,
+      message: "Refresh token missing"
+    });
   }
 
-  // Verify the refresh token signature & expiry
-  jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ message: "Invalid or expired refresh token" });
-    }
-
+  try {
+    // Verify refresh token signature & expiry
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
     const email = decoded.email;
 
+    // Check if refresh token exists in DB
     const query = "SELECT user_id, email, role FROM users WHERE refresh_token = ?";
-    connection.query(query, [refreshToken], (err, results) => {
-      if (err || results.length === 0) {
-        return res.status(403).json({ message: "Refresh token not found or already rotated" });
-      }
+    const results = await db.query(query, [refreshToken]);
 
-      const user = results[0]; // has user_id, email, role
-      const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
-
-      const updateQuery = "UPDATE users SET refresh_token = ? WHERE user_id = ?";
-      connection.query(updateQuery, [newRefreshToken, user.user_id], (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Error updating refresh token in DB" });
-        }
-
-        res.json({
-          accessToken,
-          refreshToken: newRefreshToken,
-        });
+    if (results.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: "Refresh token not found or already rotated"
       });
+    }
+
+    const user = results[0];
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+
+    // Update DB with new refresh token
+    const updateQuery = "UPDATE users SET refresh_token = ? WHERE user_id = ?";
+    await db.query(updateQuery, [newRefreshToken, user.user_id]);
+
+    return res.json({
+      success: true,
+      accessToken,
+      refreshToken: newRefreshToken,
     });
-  });
+
+  } catch (err) {
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid or expired refresh token"
+      });
+    }
+
+    console.error("Error in refreshToken:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
 };

@@ -1,7 +1,11 @@
-const connection = require("../db");
+const db = require("../utils/dbUtils");
 const moment = require("moment");
 
-exports.submitData = (req, res) => {
+/**
+ * Inserts a new event into the college_events table.
+ * Expects: pn, pt, nof, sd, ed, st, et in req.body
+ */
+exports.submitData = async (req, res) => {
   const { pn, pt, nof, sd, ed, st, et } = req.body;
 
   if (pn && pt && sd && st) {
@@ -11,32 +15,30 @@ exports.submitData = (req, res) => {
     const formattedEndTime = moment(et, "hh:mm A").format("HH:mm:ss");
 
     const mysql_qry =
-      "INSERT INTO college_events (Program_Name, Program_Type, No_of_Participants, Start_Date, End_Date, Start_Time, End_Time) VALUES (?, ?, ?, ?, ?, ?)";
+      "INSERT INTO college_events (Program_Name, Program_Type, No_of_Participants, Start_Date, End_Date, Start_Time, End_Time) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-    connection.query(
-      mysql_qry,
-      [
-        pn,
-        pt,
-        nof,
-        formattedStartDate,
-        formattedEndDate,
-        formattedStartTime,
-        formattedEndTime,
-      ],
-      (err) => {
-        if (err) {
-          console.error("Error inserting data:", err);
-          res
-            .status(500)
-            .json({ status: "error", message: "Error inserting data" });
-          return;
-        }
-        res
-          .status(201)
-          .json({ status: "success", message: "Data inserted successfully" });
-      }
-    );
+    try {
+      await db.query(
+        mysql_qry,
+        [
+          pn,
+          pt,
+          nof,
+          formattedStartDate,
+          formattedEndDate,
+          formattedStartTime,
+          formattedEndTime,
+        ]
+      );
+      res
+        .status(201)
+        .json({ status: "success", message: "Data inserted successfully" });
+    } catch (err) {
+      console.error("Error inserting data:", err);
+      res
+        .status(500)
+        .json({ status: "error", message: "Error inserting data" });
+    }
   } else {
     res
       .status(400)
@@ -44,42 +46,52 @@ exports.submitData = (req, res) => {
   }
 };
 
-exports.getData = (req, res) => {
+/**
+ * Fetches all events from the college_events table.
+ */
+exports.getData = async (req, res) => {
   const mysql_qry = "SELECT * FROM college_events";
 
-  connection.query(mysql_qry, (err, results) => {
-    if (err) {
-      console.error("Error fetching data:", err);
-      res.status(500).json({ message: "Error fetching data" });
-      return;
-    }
+  try {
+    const results = await db.query(mysql_qry);
     res.status(200).json(results);
-  });
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    res.status(500).json({ message: "Error fetching data" });
+  }
 };
 
-// Controller function to get a single event by ID
-exports.getEventById = (req, res) => {
-  const eventId = req.params.id; // Extract event_id from the URL
+/**
+ * Fetches a single event by event_id from the college_events table.
+ * Expects: event_id or id in req.params
+ */
+exports.getEventById = async (req, res) => {
+  const eventId = req.params.event_id || req.params.id;
 
-  const mysql_qry = "SELECT * FROM college_events WHERE event_id = ?"; // Query for a specific event
+  if (!eventId) {
+    return res.status(400).json({ message: "Event ID is required" });
+  }
 
-  connection.query(mysql_qry, [eventId], (err, results) => {
-    if (err) {
-      console.error("Error fetching data:", err);
-      res.status(500).json({ message: "Error fetching data" });
-      return;
-    }
+  const mysql_qry = "SELECT * FROM college_events WHERE event_id = ?";
 
-    if (results.length === 0) {
+  try {
+    const results = await db.query(mysql_qry, [eventId]);
+    if (!results || results.length === 0) {
       return res.status(404).json({ message: "Event not found" });
     }
-
-    res.status(200).json(results[0]); // Return the first (and only) event
-  });
+    res.status(200).json(results[0]);
+  } catch (err) {
+    console.error("Error fetching event:", err);
+    res.status(500).json({ message: "Error fetching event" });
+  }
 };
 
-exports.deleteEvent = (req, res) => {
-  const eventId = req.params.event_id;
+/**
+ * Deletes an event by event_id from the college_events table.
+ * Expects: event_id or id in req.params
+ */
+exports.deleteEvent = async (req, res) => {
+  const eventId = req.params.event_id || req.params.id;
 
   if (!eventId) {
     return res.status(400).json({ message: "Event ID is required" });
@@ -87,30 +99,36 @@ exports.deleteEvent = (req, res) => {
 
   const deleteQuery = "DELETE FROM college_events WHERE event_id = ?";
 
-  connection.query(deleteQuery, [eventId], (err, result) => {
-    if (err) {
-      console.error("Error deleting event:", err);
-      return res.status(500).json({ message: "Failed to delete event" });
-    }
-
-    if (result.affectedRows === 0) {
+  try {
+    const result = await db.query(deleteQuery, [eventId]);
+    // Depending on your dbUtils, result.affectedRows may be in result or result[0]
+    const affectedRows = result.affectedRows !== undefined ? result.affectedRows : (result[0]?.affectedRows || 0);
+    if (affectedRows === 0) {
       return res.status(404).json({ message: "Event not found" });
     }
-
     return res.status(200).json({ message: "Event deleted successfully" });
-  });
+  } catch (err) {
+    console.error("Error deleting event:", err);
+    return res.status(500).json({ message: "Failed to delete event" });
+  }
 };
 
-// Function to update event details (partial updates)
+/**
+ * Updates event details (partial updates supported).
+ * Only fields present in req.body will be updated.
+ * Expects: event_id or id in req.params, and any updatable fields in req.body
+ */
 exports.updateEvent = async (req, res) => {
-  const { event_id } = req.params;  // get event_id from the URL
-  const updateData = req.body;  // data to be updated
+  const eventId = req.params.event_id || req.params.id;
+  const updateData = req.body;
 
-  // Dynamically build the SQL query based on provided fields
+  if (!eventId) {
+    return res.status(400).json({ message: "Event ID is required" });
+  }
+
   const fieldsToUpdate = [];
   const valuesToUpdate = [];
 
-  // Check if the fields are provided and add them to the update query
   if (updateData.Program_Name !== undefined) {
     fieldsToUpdate.push("Program_Name = ?");
     valuesToUpdate.push(updateData.Program_Name);
@@ -139,33 +157,21 @@ exports.updateEvent = async (req, res) => {
     fieldsToUpdate.push("End_Time = ?");
     valuesToUpdate.push(updateData.End_Time);
   }
-  // Add more fields as needed
 
   if (fieldsToUpdate.length === 0) {
     return res.status(400).json({ message: "No valid fields to update" });
   }
 
-  // Add the event_id to the end of the query to identify which event to update
-  valuesToUpdate.push(event_id);
+  valuesToUpdate.push(eventId);
 
   const sqlQuery = `UPDATE college_events SET ${fieldsToUpdate.join(', ')} WHERE event_id = ?`;
 
   try {
-    const result = await new Promise((resolve, reject) => {
-      connection.query(sqlQuery, valuesToUpdate, (err, result) => {
-        if (err) {
-          console.error("Error updating event:", err);
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-
-    if (result.affectedRows === 0) {
+    const result = await db.query(sqlQuery, valuesToUpdate);
+    const affectedRows = result.affectedRows !== undefined ? result.affectedRows : (result[0]?.affectedRows || 0);
+    if (affectedRows === 0) {
       return res.status(404).json({ message: "Event not found" });
     }
-
     return res.status(200).json({ message: "Event updated successfully" });
   } catch (error) {
     console.error("Error during update process:", error);
