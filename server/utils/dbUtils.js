@@ -1,9 +1,9 @@
-const util = require("util");
-const connection = require("../db");
+// dbUtils.js
+const db = require("../db");
 
-// Promisify the query method
-const query = util.promisify(connection.query).bind(connection);
+async function query(sql, params) {
+  const [rows] = await db.query(sql, params);
+  return rows;
+}
 
-module.exports = {
-    query
-};
+module.exports = { query };
