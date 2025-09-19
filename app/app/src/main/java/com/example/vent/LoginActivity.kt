@@ -15,6 +15,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -183,6 +184,24 @@ class LoginActivity : ComponentActivity() {
                         isPasswordField = true,
                         onInputChange = { password = it },
                         onValidationChange = { isPasswordValid = it }
+                    )
+
+                    // Forgot Password
+                    Text(
+                        text = stringResource(R.string.ForgotPasswordText),
+                        color = Color(0xFF003366),
+                        fontSize = 14.sp,
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .align(Alignment.End) // Align to the end of the Column
+                            .padding(top = 8.dp, end = 10.dp)
+                            .clickable {
+                                // TODO: Navigate to the Forgot Password page
+                                // This intent will start a new activity for "Forgot Password"
+                                val intent = Intent(context, ForgotPasswordActivity::class.java)
+                                context.startActivity(intent)
+                            }
                     )
 
                     // Submit Button

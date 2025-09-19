@@ -14,6 +14,7 @@
     <string name="EmailText">Email</string>
     <string name="PasswordText">Password</string>
     <string name="SignUpText">Let\'s sign you up…</string>
+    <string name="ForgotPasswordText">Forgot Password?</string>
     <string name="SignUpOrText">or</string>
     <string name="GoogleOAuth">Google</string>
     <string name="navigation_open">Open Navigation drawer</string>
