@@ -279,5 +279,63 @@ object AnimationUtils {
         }
     }
 
+    @Composable
+    fun ResetPasswordButtonLoader(
+        modifier: Modifier = Modifier,
+        text: String = "Resetting..."
+    ) {
+        val infiniteTransition = rememberInfiniteTransition()
+
+        // Pulsating alpha for glow effect
+        val resetPasswordAlpha by infiniteTransition.animateFloat(
+            initialValue = 0.6f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        )
+
+        // Subtle scale bounce
+        val scale by infiniteTransition.animateFloat(
+            initialValue = 0.95f,
+            targetValue = 1.05f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1200, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        )
+
+        // Dots animation
+        val dotCount = remember { mutableStateOf(0) }
+        LaunchedEffect(Unit) {
+            while (true) {
+                dotCount.value = (dotCount.value + 1) % 4 // 0..3 dots
+                delay(400)
+            }
+        }
+
+        Box(
+            modifier = modifier
+                .height(60.dp)
+                .width(200.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = resetPasswordAlpha
+                }
+                .clip(RoundedCornerShape(30.dp))
+                .background(Color(0xFF003366)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text + ".".repeat(dotCount.value),
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+
 
 }

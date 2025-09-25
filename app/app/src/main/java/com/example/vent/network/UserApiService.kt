@@ -200,6 +200,76 @@ object UserApiService {
         VolleyHelper.getInstance(context).addToRequestQueue(stringRequest)
     }
 
+    fun resetPassword(context: Context, email: String, newPassword: String, onResult: (Boolean, String) -> Unit) {
+        val url = ApiConstants.RESET_PASSWORD_URL
+
+        val stringRequest = object : StringRequest(
+            Method.POST, url,
+            Response.Listener { response ->
+                try {
+                    val jsonResponse = JSONObject(response)
+                    val success = jsonResponse.optBoolean("success", false)
+                    val message = jsonResponse.optString("message", "No message")
+
+                    if (success) {
+                        Log.d("ResetPassword", "Password reset successful: $message")
+                        onResult(true, message)
+                    } else {
+                        Log.e("ResetPassword", "Password reset failed: $message")
+                        onResult(false, message)
+                    }
+                } catch (e: Exception) {
+                    Log.e("ResetPassword", "JSON parsing error: ${e.message}")
+                    onResult(false, "Invalid response from server")
+                }
+            },
+            Response.ErrorListener { error ->
+                Log.e("ResetPassword", "Error: ${error.message}")
+                error.networkResponse?.let { networkResponse ->
+                    val statusCode = networkResponse.statusCode
+                    val data = String(networkResponse.data)
+
+                    val errorMsg = try {
+                        JSONObject(data).getString("message")
+                    } catch (e: Exception) {
+                        "Unexpected error"
+                    }
+
+                    val userFriendlyMsg = when (statusCode) {
+                        400 -> "Email and new password required"
+                        404 -> "User not found"
+                        500 -> "Server error"
+                        else -> errorMsg
+                    }
+
+                    onResult(false, userFriendlyMsg)
+                } ?: run {
+                    if (error is TimeoutError) {
+                        onResult(false, "Network timeout")
+                    } else if (error is NoConnectionError) {
+                        onResult(false, "No internet connection")
+                    } else {
+                        onResult(false, "Unknown error")
+                    }
+                }
+            }
+        ) {
+            override fun getParams(): MutableMap<String, String> {
+                return mutableMapOf(
+                    "email" to email,
+                    "newPassword" to newPassword
+                )
+            }
+
+            override fun getHeaders(): MutableMap<String, String> {
+                return mutableMapOf("Content-Type" to "application/x-www-form-urlencoded")
+            }
+        }
+
+        VolleyHelper.getInstance(context).addToRequestQueue(stringRequest)
+    }
+
+
     fun fetchPendingUsers(context: Context, onSuccess: (List<User>) -> Unit, onError: (String) -> Unit) {
         if (SessionManager.shouldForceLogout(context)) {
             onError("Session expired. Please log in again.")

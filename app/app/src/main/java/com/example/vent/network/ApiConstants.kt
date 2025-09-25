@@ -2,7 +2,7 @@ package com.example.vent.network
 
 object ApiConstants {
     // Base URL for the API
-    private const val BASE_URL = "https://ttdnrt-ip-185-183-33-33.tunnelmole.net/"
+    private const val BASE_URL = "https://y0sdsg-ip-122-170-2-205.tunnelmole.net/"
 
     // Endpoints
     const val REGISTER_URL = "${BASE_URL}register"
@@ -15,6 +15,7 @@ object ApiConstants {
 //    const val SIGNUP_URL = "${BASE_URL}auth/signup"
 //    const val EVENT_REGISTER_URL = "${BASE_URL}events/register"
 //    const val FETCH_EVENTS_URL = "${BASE_URL}events/list"
+    const val RESET_PASSWORD_URL = "${BASE_URL}reset-password"
 
     // Timeout values
     const val TIMEOUT_CONNECT = 15_000 // 15 seconds

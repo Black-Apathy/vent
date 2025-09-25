@@ -1,24 +1,22 @@
+# IDE Files and Configuration
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 .DS_Store
+
+# Build and Output Folders
 /build
 /captures
-.externalNativeBuild
-.cxx
-local.properties
-# .gitignore
+dist/
+.tmp.driveupload/
+.gradle/
+.cxx/
+.externalNativeBuild/
+
+# Dependency and Package Files
 node_modules/
+package-lock.json
+/local.properties
+
+# Log and Temporary Files
 *.log
 *.env
-package-lock.json
-dist/
-build/
-.tmp.driveupload/
-
