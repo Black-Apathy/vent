@@ -269,7 +269,6 @@ object UserApiService {
         VolleyHelper.getInstance(context).addToRequestQueue(stringRequest)
     }
 
-
     fun fetchPendingUsers(context: Context, onSuccess: (List<User>) -> Unit, onError: (String) -> Unit) {
         if (SessionManager.shouldForceLogout(context)) {
             onError("Session expired. Please log in again.")
@@ -409,6 +408,42 @@ object UserApiService {
         }
 
         VolleyHelper.getInstance(context).addToRequestQueue(request)
+    }
+
+    fun refreshToken(context: Context, refreshToken: String, onResult: (Boolean) -> Unit) {
+        val stringRequest = object : StringRequest(
+            Method.POST, ApiConstants.REFRESH_TOKEN_URL,
+            Response.Listener { response ->
+                try {
+                    val jsonResponse = JSONObject(response)
+                    val success = jsonResponse.optBoolean("success", false)
+                    if (success && jsonResponse.has("accessToken")) {
+                        val accessToken = jsonResponse.getString("accessToken")
+                        val newRefreshToken = jsonResponse.optString("refreshToken", refreshToken)
+
+                        AuthTokenProvider.saveTokens(context, accessToken, newRefreshToken)
+                        onResult(true)
+                    } else {
+                        onResult(false)
+                    }
+                } catch (e: Exception) {
+                    onResult(false)
+                }
+            },
+            Response.ErrorListener {
+                onResult(false)
+            }
+        ) {
+            override fun getParams(): MutableMap<String, String> {
+                return mutableMapOf("refreshToken" to refreshToken)
+            }
+
+            override fun getHeaders(): MutableMap<String, String> {
+                return mutableMapOf("Content-Type" to "application/x-www-form-urlencoded")
+            }
+        }
+
+        VolleyHelper.getInstance(context).addToRequestQueue(stringRequest)
     }
 
 }

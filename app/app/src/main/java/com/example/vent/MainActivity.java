@@ -8,10 +8,13 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.example.vent.com.example.vent.utils.AuthTokenProvider;
+import com.example.vent.com.example.vent.utils.SessionManager;
 import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -90,7 +93,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     .replace(R.id.fragment_container, new AboutUsFragment())
                     .commit();
         } else if (itemId == R.id.nav_logout) {
+            SessionManager.INSTANCE.logout(this);
+
             Toast.makeText(this, "Logged out successfully!", Toast.LENGTH_SHORT).show();
+
+            // Redirect to LoginActivity
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
         }
 
         drawerLayout.closeDrawer(GravityCompat.START);

@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,27 +14,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import android.util.Log
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.android.volley.DefaultRetryPolicy
-import com.android.volley.Request
 import com.android.volley.RequestQueue
-import com.android.volley.toolbox.JsonArrayRequest
-import com.android.volley.toolbox.Volley
-import com.example.vent.network.ApiConstants
 import com.example.vent.network.UserApiService.viewEvents
 import org.json.JSONArray
 import org.json.JSONObject
@@ -44,6 +25,8 @@ class ViewDataFragment : Fragment() {
     private lateinit var adapter: EventAdapter
     private val events = mutableListOf<Model>()
 
+    private val dynamicTitle = "View Events"
+
     private var progressBar: ProgressBar? = null
     private var progressText: TextView? = null
     private var requestQueue: RequestQueue? = null
@@ -52,6 +35,10 @@ class ViewDataFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Inflate the layout for this fragment
+        if (requireActivity() != null) {
+            requireActivity()!!.setTitle(dynamicTitle)
+        }
         val rootView = inflater.inflate(R.layout.fragment_view_details, container, false)
 
         // Initialize UI elements
