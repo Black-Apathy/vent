@@ -1,4 +1,5 @@
 const db = require("../utils/dbUtils");
+const { generatePdfBuffer } = require("../utils/pdfService");
 const moment = require("moment");
 
 /**
@@ -18,18 +19,15 @@ exports.submitData = async (req, res) => {
       "INSERT INTO college_events (Program_Name, Program_Type, No_of_Participants, Start_Date, End_Date, Start_Time, End_Time) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     try {
-      await db.query(
-        mysql_qry,
-        [
-          pn,
-          pt,
-          nof,
-          formattedStartDate,
-          formattedEndDate,
-          formattedStartTime,
-          formattedEndTime,
-        ]
-      );
+      await db.query(mysql_qry, [
+        pn,
+        pt,
+        nof,
+        formattedStartDate,
+        formattedEndDate,
+        formattedStartTime,
+        formattedEndTime,
+      ]);
       res
         .status(201)
         .json({ status: "success", message: "Data inserted successfully" });
@@ -40,9 +38,10 @@ exports.submitData = async (req, res) => {
         .json({ status: "error", message: "Error inserting data" });
     }
   } else {
-    res
-      .status(400)
-      .json({ message: "Missing Program Name, Program Type, Number of Participants, Start Date, or Start Time" });
+    res.status(400).json({
+      message:
+        "Missing Program Name, Program Type, Number of Participants, Start Date, or Start Time",
+    });
   }
 };
 
@@ -102,7 +101,10 @@ exports.deleteEvent = async (req, res) => {
   try {
     const result = await db.query(deleteQuery, [eventId]);
     // Depending on your dbUtils, result.affectedRows may be in result or result[0]
-    const affectedRows = result.affectedRows !== undefined ? result.affectedRows : (result[0]?.affectedRows || 0);
+    const affectedRows =
+      result.affectedRows !== undefined
+        ? result.affectedRows
+        : result[0]?.affectedRows || 0;
     if (affectedRows === 0) {
       return res.status(404).json({ message: "Event not found" });
     }
@@ -164,17 +166,51 @@ exports.updateEvent = async (req, res) => {
 
   valuesToUpdate.push(eventId);
 
-  const sqlQuery = `UPDATE college_events SET ${fieldsToUpdate.join(', ')} WHERE event_id = ?`;
+  const sqlQuery = `UPDATE college_events SET ${fieldsToUpdate.join(
+    ", "
+  )} WHERE event_id = ?`;
 
   try {
     const result = await db.query(sqlQuery, valuesToUpdate);
-    const affectedRows = result.affectedRows !== undefined ? result.affectedRows : (result[0]?.affectedRows || 0);
+    const affectedRows =
+      result.affectedRows !== undefined
+        ? result.affectedRows
+        : result[0]?.affectedRows || 0;
     if (affectedRows === 0) {
       return res.status(404).json({ message: "Event not found" });
     }
     return res.status(200).json({ message: "Event updated successfully" });
   } catch (error) {
     console.error("Error during update process:", error);
-    return res.status(500).json({ message: "An error occurred while updating the event" });
+    return res
+      .status(500)
+      .json({ message: "An error occurred while updating the event" });
+  }
+};
+
+exports.downloadEventPdf = async (req, res) => {
+  try {
+    const eventId = req.params.id; // You'll use this later for DB lookup
+
+    // DUMMY DATA
+    const eventData = {
+      programName: "Tech Symposium 2025",
+      displayStartDate: "15 Mar 2025",
+      numberOfParticipants: 120,
+    };
+
+    // Service to generate PDF
+    const pdfBuffer = await generatePdfBuffer(eventData);
+
+    // Send Response
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Length": pdfBuffer.length,
+      "Content-Disposition": `attachment; filename="Event_${eventId}.pdf"`,
+    });
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("PDF Error:", error);
+    res.status(500).json({ error: "Could not generate PDF" });
   }
 };
