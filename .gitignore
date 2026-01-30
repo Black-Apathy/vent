@@ -4,7 +4,9 @@
 .DS_Store
 
 # Build and Output Folders
-/build
+build/
+app/build/
+.gradle/
 /captures
 dist/
 .tmp.driveupload/
