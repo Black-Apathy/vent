@@ -190,25 +190,31 @@ exports.updateEvent = async (req, res) => {
 
 exports.downloadEventPdf = async (req, res) => {
   try {
-    const eventId = req.params.id; // You'll use this later for DB lookup
+    const eventId = req.params.id;
 
-    // DUMMY DATA
-    const eventData = {
-      programName: "Tech Symposium 2025",
-      displayStartDate: "15 Mar 2025",
-      numberOfParticipants: 120,
-    };
+    // 1. Fetch from DB
+    // The destructuring [rows] here is actually extracting the first result from the query array
+    const [rows] = await db.query('SELECT * FROM college_events WHERE event_id = ?', [eventId]);
 
-    // Service to generate PDF
+    // 2. Check if we actually got data
+    if (!rows) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    // --- THE FIX IS HERE ---
+    // 'rows' is already the object we want. We don't need rows[0].
+    const eventData = rows;
+
+    // 3. Generate PDF
     const pdfBuffer = await generatePdfBuffer(eventData);
 
-    // Send Response
     res.set({
       "Content-Type": "application/pdf",
       "Content-Length": pdfBuffer.length,
       "Content-Disposition": `attachment; filename="Event_${eventId}.pdf"`,
     });
     res.send(pdfBuffer);
+
   } catch (error) {
     console.error("PDF Error:", error);
     res.status(500).json({ error: "Could not generate PDF" });

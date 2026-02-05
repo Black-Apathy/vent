@@ -22,3 +22,4 @@ package-lock.json
 # Log and Temporary Files
 *.log
 *.env
+app/local.properties
