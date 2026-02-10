@@ -47,25 +47,40 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Load Home Fragment by default
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new PendingUsersFragment())
+                    .replace(R.id.fragment_container, new HomeFragment())
                     .commit();
             navigationView.setCheckedItem(R.id.nav_home);
         }
 
-        // Override back press to show confirmation
+        // Inside onCreate in MainActivity.java
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (backPressedOnce) {
-                    // If back pressed twice, exit the app
-                    MainActivity.super.getOnBackPressedDispatcher().onBackPressed();  // Corrected this line
-                } else {
-                    // Show toast and set flag to true
-                    Toast.makeText(MainActivity.this, "Press back again to exit", Toast.LENGTH_SHORT).show();
-                    backPressedOnce = true;
+                // 1. Check if Drawer is open first - if so, close it
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return;
+                }
 
-                    // Reset the flag after 2 seconds
-                    new android.os.Handler().postDelayed(() -> backPressedOnce = false, 2000);
+                // 2. Check which fragment is currently visible
+                androidx.fragment.app.Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+
+                // 3. If we are on the Home screen (or the backstack is empty), show the exit confirmation
+                if (currentFragment instanceof HomeFragment || getSupportFragmentManager().getBackStackEntryCount() == 0) {
+                    if (backPressedOnce) {
+                        // If back pressed twice on Home, exit
+                        MainActivity.super.getOnBackPressedDispatcher().onBackPressed();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+                        backPressedOnce = true;
+                        new android.os.Handler().postDelayed(() -> backPressedOnce = false, 2000);
+                    }
+                } else {
+                    // 4. If we are on ANY other screen (Log Event, View Data, etc.), just go back
+                    getSupportFragmentManager().popBackStack();
+
+                    // Optional: Update the Navigation Drawer selection to match "Home" if we just went back to it
+                    navigationView.setCheckedItem(R.id.nav_home);
                 }
             }
         });
@@ -78,11 +93,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (itemId == R.id.nav_home) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new PendingUsersFragment())
+                    .replace(R.id.fragment_container, new HomeFragment())
                     .commit();
         } else if (itemId == R.id.nav_registration) {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new EventRegisterationFragment())
+                    .commit();
+        } else if (itemId == R.id.nav_pendingUsers) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new PendingUsersFragment())
                     .commit();
         } else if (itemId == R.id.nav_dataview) {
             getSupportFragmentManager().beginTransaction()

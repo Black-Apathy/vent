@@ -80,6 +80,25 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/participantsLayout"
+                    style="@style/CustomTextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="30dp"
+                    android:hint="@string/numberOfParticipants"
+                    android:textColorHint="@color/black"
+                    app:cursorColor="@color/orange"
+                    app:hintTextColor="@color/orange">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/participants"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textColor="@color/blue" />
+                </com.google.android.material.textfield.TextInputLayout>
+
                 <!-- Start and End Date -->
                 <LinearLayout
                     android:layout_width="match_parent"

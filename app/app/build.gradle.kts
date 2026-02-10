@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.foundation.android)
     implementation(libs.media3.common.ktx)
     implementation(libs.itext7.core)
+    implementation(libs.androidx.compose.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

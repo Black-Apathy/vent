@@ -1,13 +1,20 @@
 package com.example.vent
 
 import Model
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
+import com.example.vent.network.ApiConstants
 import com.example.vent.utils.DateUtils.formatDate
 import com.example.vent.utils.TimeUtils.formatTime
 
@@ -33,19 +40,55 @@ class EventDetailFragment : Fragment() {
         // Set event data to the views
         val eventName: TextView = rootView.findViewById(R.id.eventName)
         val eventType: TextView = rootView.findViewById(R.id.eventType)
+        val eventParticipants: TextView = rootView.findViewById(R.id.eventParticipants)
         val eventStartDate: TextView = rootView.findViewById(R.id.eventStartDate)
         val eventEndDate: TextView = rootView.findViewById(R.id.eventEndDate)
         val eventStartTime: TextView = rootView.findViewById(R.id.eventStartTime)
         val eventEndTime: TextView = rootView.findViewById(R.id.eventEndTime)
+        val btnDownloadPdf: Button = rootView.findViewById(R.id.btnDownloadPdf)
 
         eventName.text = event.name
         eventType.text = event.type
+        eventParticipants.text = event.participants.toString()
         eventStartDate.text = event.startDate?.let { formatDate(it) } ?: "Unknown Date"
         eventEndDate.text = event.endDate?.let { formatDate(it) } ?: "Unknown Date"
         eventStartTime.text = formatTime(event.startTime)
         eventEndTime.text = formatTime(event.startTime)
 
+        btnDownloadPdf.setOnClickListener {
+            downloadPdf(event.id)
+        }
+
         return rootView
+    }
+
+    private fun downloadPdf(eventId: String?) {
+        if (eventId.isNullOrEmpty()) {
+            Toast.makeText(requireContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            // USE THE NEW FUNCTION HERE
+            val downloadUrl = ApiConstants.getEventPdfUrl(eventId)
+
+            val request = DownloadManager.Request(Uri.parse(downloadUrl))
+
+            // ... rest of your download logic (setTitle, setDestination, enqueue) ...
+            request.setTitle("Event Report: ${event.name}")
+            request.setDescription("Downloading official event report...")
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Event_${event.name}_Report.pdf")
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+
+            val manager = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            manager.enqueue(request)
+
+            Toast.makeText(requireContext(), "Download started...", Toast.LENGTH_SHORT).show()
+
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
+        }
     }
 
     companion object {

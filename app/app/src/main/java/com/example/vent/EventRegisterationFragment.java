@@ -27,6 +27,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.vent.network.ApiConstants;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -45,7 +46,7 @@ import java.util.Objects;
 
 public class EventRegisterationFragment extends Fragment {
 
-    private String insertUrl = "https://rgtafc-ip-152-58-2-57.tunnelmole.net/submit";
+    private String insertUrl = ApiConstants.CREATE_EVENT_URL;
     private String dynamicTitle = "Event Registration"; // Set this based on the current state
 
     private DrawerLayout drawerLayout;
@@ -58,7 +59,7 @@ public class EventRegisterationFragment extends Fragment {
     private ArrayAdapter<String> adapterItems;
 
     private TextInputLayout startDate, endDate, startTime, endTime;
-    private TextInputEditText programNametxt, startDatetxt, endDatetxt, startTimetxt, endTimetxt, defaulttxt;
+    private TextInputEditText programNametxt, startDatetxt, endDatetxt, startTimetxt, endTimetxt, participantsTxt, defaulttxt;
 
     private TextView startDateError, startTimeError, endDateError, endTimeError;
 
@@ -93,6 +94,7 @@ public class EventRegisterationFragment extends Fragment {
         autoCompleteTextView.setAdapter(adapterItems);
 
         programNametxt = view.findViewById(R.id.programName);
+        participantsTxt = view.findViewById(R.id.participants);
         startDate = view.findViewById(R.id.startdatelayout);
         startDatetxt = view.findViewById(R.id.startdateinnertxt);
         endDate = view.findViewById(R.id.enddatelayout);
@@ -120,6 +122,16 @@ public class EventRegisterationFragment extends Fragment {
                 programNametxt.setFocusable(true);
                 programNametxt.setFocusableInTouchMode(true);
                 programNametxt.requestFocus(); // Set focus to Program Name
+            });
+        }
+
+        if (participantsTxt != null) {
+            participantsTxt.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    showKeyboard(v);
+                } else {
+                    hideKeyboard(v);
+                }
             });
         }
 
@@ -363,7 +375,7 @@ public class EventRegisterationFragment extends Fragment {
 
 
     // Validate Input Fields
-    private boolean isInputValid(String programName, String programType, String startDate, String endDate, String startTime, String endTime) {
+    private boolean isInputValid(String programName, String programType, String participants, String startDate, String endDate, String startTime, String endTime) {
         // Check if any of the required fields are empty
 
         // Check if Program Name is empty
@@ -396,6 +408,38 @@ public class EventRegisterationFragment extends Fragment {
             if (autoCompleteTextView != null) {
                 autoCompleteTextView.setError(null);  // Clear the error if the field is filled
             }
+        }
+        // Check if participants field is empty
+        if (participants.isEmpty()) {
+            if (participantsTxt != null) {
+                participantsTxt.setError("Participants cannot be blank");
+                return false;
+            }
+        } else {
+                try {
+                    // Convert the String to an Integer
+                    int count = Integer.parseInt(participants);
+
+                    // Check if the number is 0 or negative
+                    if (count <= 0) {
+                        if (participantsTxt != null) {
+                            participantsTxt.setError("Participants must be greater than 0");
+                        }
+                        return false;
+                    }
+                    else {
+                        // Valid input (Not empty, and > 0)
+                        if (participantsTxt != null) {
+                            participantsTxt.setError(null);
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    // Safety check in case the input isn't a valid number
+                    if (participantsTxt != null) {
+                        participantsTxt.setError("Invalid number");
+                    }
+                    return false;
+                }
         }
 
         // Check if Start Date is empty
@@ -464,12 +508,13 @@ public class EventRegisterationFragment extends Fragment {
     private void sendData() {
         String programName = Objects.requireNonNull(programNametxt.getText()).toString();
         String programType = Objects.requireNonNull(autoCompleteTextView.getText()).toString();
+        String participants = Objects.requireNonNull(participantsTxt.getText()).toString();
         String startDate = Objects.requireNonNull(startDatetxt.getText()).toString();
         String endDate = Objects.requireNonNull(endDatetxt.getText()).toString();
         String startTime = Objects.requireNonNull(startTimetxt.getText()).toString();
         String endTime = Objects.requireNonNull(endTimetxt.getText()).toString();
 
-        if (isInputValid(programName, programType, startDate, endDate, startTime, endTime)) {
+        if (isInputValid(programName, programType, participants, startDate, endDate, startTime, endTime)) {
             ProgressDialog progressDialog = new ProgressDialog(requireContext());
             progressDialog.setMessage("Loading...");
             progressDialog.show();
@@ -495,6 +540,7 @@ public class EventRegisterationFragment extends Fragment {
                     Map<String, String> params = new HashMap<>();
                     params.put("pn", programName);
                     params.put("pt", programType);
+                    params.put("np", participants);
                     params.put("sd", startDate);
                     params.put("ed", endDate);
                     params.put("st", startTime);

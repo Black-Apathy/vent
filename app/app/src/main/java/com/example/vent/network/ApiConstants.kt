@@ -2,7 +2,7 @@ package com.example.vent.network
 
 object ApiConstants {
     // Base URL for the API
-    private const val BASE_URL = "https://8n8e2a-ip-116-72-105-219.tunnelmole.net/"
+    private const val BASE_URL = "http://10.22.186.3:3000/"
 
     // Endpoints
     const val REGISTER_URL = "${BASE_URL}register"
@@ -12,13 +12,17 @@ object ApiConstants {
     const val CHECK_STATUS_URL = "${BASE_URL}check-user-status"
     const val LOGIN_URL = "${BASE_URL}login"
     const val VIEW_EVENTS = "${BASE_URL}events"
-//    const val SIGNUP_URL = "${BASE_URL}auth/signup"
-//    const val EVENT_REGISTER_URL = "${BASE_URL}events/register"
-//    const val FETCH_EVENTS_URL = "${BASE_URL}events/list"
+    const val CREATE_EVENT_URL = "${BASE_URL}events"
     const val RESET_PASSWORD_URL = "${BASE_URL}reset-password"
     const val REFRESH_TOKEN_URL = "${BASE_URL}refresh-token"
 
     // Timeout values
-    const val TIMEOUT_CONNECT = 15_000 // 15 seconds
+    const val TIMEOUT_CONNECT = 15_000
     const val TIMEOUT_READ = 15_000
+
+    // --- PDF Download Function ---
+    // This takes the ID and returns the full URL: "https://.../events/123/pdf"
+    fun getEventPdfUrl(eventId: String): String {
+        return "${BASE_URL}events/$eventId/pdf"
+    }
 }

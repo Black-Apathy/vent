@@ -120,8 +120,10 @@ class ViewDataFragment : Fragment() {
         for (i in 0 until response.length()) {
             val jsonObject: JSONObject = response.getJSONObject(i)
             val event = Model(
+                jsonObject.getString("event_id"),
                 jsonObject.getString("Program_Name"),
                 jsonObject.getString("Program_Type"),
+                jsonObject.getString("No_of_Participants"),
                 jsonObject.getString("Start_Date"),
                 jsonObject.optString("End_Date", "N/A"),
                 jsonObject.getString("Start_Time"),

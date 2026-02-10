@@ -85,6 +85,25 @@
             android:gravity="center"
             android:paddingBottom="10dp"/>
 
+        <!--Number of Participants-->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Number of Participants"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:gravity="center"/>
+
+        <TextView
+            android:id="@+id/eventParticipants"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/blue"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:paddingBottom="10dp"/>
+
         <!-- Dates -->
         <LinearLayout
             android:layout_width="match_parent"

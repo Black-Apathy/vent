@@ -4,6 +4,7 @@
     <string name="ViewData">View Events</string>
     <string name="programName">Program Name</string>
     <string name="programType">Program Type</string>
+    <string name="numberOfParticipants">Number of Participants</string>
     <string name="startDate">Start Date</string>
     <string name="endDate">End Date</string>
     <string name="startTime">Start Time</string>

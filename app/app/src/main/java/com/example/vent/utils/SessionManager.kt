@@ -8,6 +8,30 @@ import java.nio.charset.Charset
 
 object SessionManager {
 
+    private fun getDecodedPayload(token: String?): JSONObject? {
+        if (token.isNullOrEmpty()) return null
+        return try {
+            val parts = token.split(".")
+            if (parts.size != 3) return null
+            val payloadJson = String(Base64.decode(parts[1], Base64.DEFAULT), Charset.forName("UTF-8"))
+            JSONObject(payloadJson)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun getUserRole(context: Context): String? {
+        val token = SecurePrefs.getAccessToken(context)
+        val payload = getDecodedPayload(token)
+        return payload?.optString("role") // Returns "admin", "teacher", etc.
+    }
+
+    fun getUserName(context: Context): String? {
+        val token = SecurePrefs.getAccessToken(context)
+        val payload = getDecodedPayload(token)
+        return payload?.optString("name") // Returns the user's name
+    }
+
     fun isTokenExpired(token: String): Boolean {
         try {
             val parts = token.split(".")

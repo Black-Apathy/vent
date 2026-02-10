@@ -9,7 +9,7 @@ const moment = require("moment");
 exports.submitData = async (req, res) => {
   const { pn, pt, nof, sd, ed, st, et } = req.body;
 
-  if (pn && pt && sd && st) {
+  if (pn && pt && nof && sd && st) {
     const formattedStartDate = moment(sd, "D/M/YYYY").format("YYYY-MM-DD");
     const formattedEndDate = moment(ed, "D/M/YYYY").format("YYYY-MM-DD");
     const formattedStartTime = moment(st, "hh:mm A").format("HH:mm:ss");
@@ -188,6 +188,12 @@ exports.updateEvent = async (req, res) => {
   }
 };
 
+/**
+ * Generates and downloads an official Event Report PDF.
+ * Fetches event data from the database and compiles it into a formatted PDF document.
+ * Expects: event ID in req.params.id
+ * Returns: Binary PDF file with 'Content-Disposition: attachment' for immediate download.
+ */
 exports.downloadEventPdf = async (req, res) => {
   try {
     const eventId = req.params.id;
