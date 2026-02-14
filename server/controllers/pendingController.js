@@ -15,6 +15,20 @@ exports.getPendingUsers = async (req, res) => {
 };
 
 /**
+ * Fetches all users from the users table.
+ */
+exports.getAllUsers = async (req, res) => {
+  const mysql_qry = "SELECT user_id, email, role, approved_date FROM users ORDER BY role ASC";
+  try {
+    const results = await db.query(mysql_qry);
+    res.status(200).json(results);
+  } catch (err) {
+    console.error("Error fetching all users:", err);
+    res.status(500).json({ message: "Error fetching all users" });
+  }
+};
+
+/**
  * Approves a pending user: moves them to users table and deletes from pending_users.
  * Expects: request_id and role in req.body
  */

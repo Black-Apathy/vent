@@ -14,9 +14,11 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import com.example.vent.com.example.vent.utils.AuthTokenProvider
 import com.example.vent.network.ApiConstants
 import com.example.vent.utils.DateUtils.formatDate
 import com.example.vent.utils.TimeUtils.formatTime
+import androidx.core.net.toUri
 
 
 class EventDetailFragment : Fragment() {
@@ -69,16 +71,25 @@ class EventDetailFragment : Fragment() {
         }
 
         try {
-            // USE THE NEW FUNCTION HERE
             val downloadUrl = ApiConstants.getEventPdfUrl(eventId)
+            val request = DownloadManager.Request(downloadUrl.toUri())
 
-            val request = DownloadManager.Request(Uri.parse(downloadUrl))
+            val token = AuthTokenProvider.getAccessToken(requireContext())
 
-            // ... rest of your download logic (setTitle, setDestination, enqueue) ...
+            if (token != null) {
+                request.addRequestHeader("Authorization", "Bearer $token")
+            } else {
+                Toast.makeText(requireContext(), "Error: User not logged in", Toast.LENGTH_SHORT).show()
+                return
+            }
+
             request.setTitle("Event Report: ${event.name}")
             request.setDescription("Downloading official event report...")
             request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Event_${event.name}_Report.pdf")
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+
+            // Ensure network types (optional but good practice)
+            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
 
             val manager = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             manager.enqueue(request)

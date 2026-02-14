@@ -15,15 +15,11 @@
             android:title="@string/Header"/>
         <item
             android:id="@+id/nav_pendingUsers"
-            android:title="Pending Users"/>
+            android:title="@string/user_management" />
 
         <item
             android:id="@+id/nav_dataview"
             android:title="@string/ViewData"/>
-
-        <item
-            android:id="@+id/nav_about"
-            android:title="@string/About_Us_Title"/>
     </group>
 
     <item

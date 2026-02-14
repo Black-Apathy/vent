@@ -11,24 +11,32 @@ exports.registerUser = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(400)
-      .json({ message: "All fields are required for registration" });
+    return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
-    // Hash the password
+    // 1. Check if user is already approved in 'users'
+    const [existingApproved] = await db.query("SELECT email FROM users WHERE email = ?", [email]);
+    if (existingApproved) {
+      return res.status(400).json({ message: "User is already registered and approved. Please login." });
+    }
+
+    // 2. Check if user is already waiting in 'pending_users'
+    const [existingPending] = await db.query("SELECT email FROM pending_users WHERE email = ?", [email]);
+    if (existingPending) {
+      return res.status(400).json({ message: "Registration already submitted. Please wait for admin approval." });
+    }
+
+    // 3. If neither, proceed with registration
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const mysql_qry =
-      "INSERT INTO pending_users (email, password_hash) VALUES (?, ?)";
+    const mysql_qry = "INSERT INTO pending_users (email, password_hash) VALUES (?, ?)";
 
     await db.query(mysql_qry, [email, hashedPassword]);
-    return res
-      .status(201)
-      .json({ message: "Registration successful. Awaiting admin approval." });
+    return res.status(201).json({ message: "Registration successful. Awaiting admin approval." });
+
   } catch (error) {
-    console.error("Error hashing password:", error);
+    console.error("Error during registration:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -41,45 +49,45 @@ exports.checkUserStatus = async (req, res) => {
   const { email } = req.query;
 
   if (!email) {
-    return res.status(400).json({
-      success: false,
-      message: "Email is required",
-    });
+    return res.status(400).json({ success: false, message: "Email is required" });
   }
 
-  const mysql_qry = "SELECT role, approved_date FROM users WHERE email = ?";
-
   try {
-    const results = await db.query(mysql_qry, [email]);
+    // 1. Check the main 'users' table
+    const approvedQry = "SELECT role, approved_date FROM users WHERE email = ?";
+    const approvedResults = await db.query(approvedQry, [email]);
 
-    if (results.length > 0) {
-      const user = results[0];
-
-      if (user.approved_date) {
-        return res.status(200).json({
-          success: true,
-          status: "approved",
-          role: user.role,
-        });
-      } else {
-        return res.status(200).json({
-          success: true,
-          status: "pending",
-        });
-      }
-    } else {
-      return res.status(404).json({
-        success: false,
-        status: "not_found",
-        message: "User not found",
+    if (approvedResults.length > 0) {
+      // User is approved (or at least exists in the main table)
+      return res.status(200).json({
+        success: true,
+        status: "approved",
+        role: approvedResults[0].role,
       });
     }
+
+    // 2. If not found in 'users', check the 'pending_users' table
+    const pendingQry = "SELECT email FROM pending_users WHERE email = ?";
+    const pendingResults = await db.query(pendingQry, [email]);
+
+    if (pendingResults.length > 0) {
+      // User exists in pending table
+      return res.status(200).json({
+        success: true,
+        status: "pending",
+      });
+    }
+
+    // 3. Truly not found anywhere
+    return res.status(404).json({
+      success: false,
+      status: "not_found",
+      message: "User not found",
+    });
+
   } catch (error) {
     console.error("Error fetching user status:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Error fetching user status",
-    });
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 

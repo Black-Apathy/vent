@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   getPendingUsers,
+  getAllUsers,
   approveUser,
   rejectUser,
 } = require("../controllers/pendingController");
@@ -11,6 +12,9 @@ const router = express.Router();
 
 // GET all pending users
 router.get("/pending-user", authenticateToken, authorizeRoles("admin"), getPendingUsers);
+
+// GET all users
+router.get("/all-users", authenticateToken, authorizeRoles("admin"), getAllUsers);
 
 // Approve user
 router.post("/approve-user", authenticateToken, authorizeRoles("admin"), approveUser);

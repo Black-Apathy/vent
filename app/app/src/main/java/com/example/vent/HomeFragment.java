@@ -33,13 +33,31 @@ public class HomeFragment extends Fragment {
 
         // 4. Fetch User Data
         String role = SessionManager.INSTANCE.getUserRole(requireContext());
-        String name = SessionManager.INSTANCE.getUserName(requireContext());
-
-        // 5. Provide fallback values to avoid null pointer issues in UI
         String safeRole = (role != null) ? role : "student";
 
-        // 6. Call the Kotlin Wrapper bridge
-        HomeViewWrapperKt.setupComposeHome(this, composeView, safeRole);
+        // 5. Call the Kotlin Wrapper bridge with the Navigation Logic
+        // We pass a lambda/callback that MainActivity will execute
+        HomeViewWrapperKt.setupComposeHome(this, composeView, safeRole, route -> {
+            MainActivity activity = (MainActivity) getActivity();
+            if (activity != null) {
+                // Sync the side menu highlight based on the route clicked in Compose
+                switch (route) {
+                    case "REGISTRATION":
+                        activity.navigateWithSync(R.id.nav_registration);
+                        break;
+                    case "VIEW_DATA":
+                        activity.navigateWithSync(R.id.nav_dataview);
+                        break;
+                    case "PENDING":
+                        activity.navigateWithSync(R.id.nav_pendingUsers);
+                        break;
+                    default:
+                        activity.navigateWithSync(R.id.nav_home);
+                        break;
+                }
+            }
+            return null; // Required for Kotlin Unit return type in Java
+        });
 
         return composeView;
     }

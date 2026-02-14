@@ -328,6 +328,89 @@ object UserApiService {
         VolleyHelper.getInstance(context).addToRequestQueue(request)
     }
 
+    fun getPendingCount(context: Context, onResult: (Int) -> Unit) {
+        val url = ApiConstants.FETCH_PENDING_USERS_URL
+        val accessToken = AuthTokenProvider.getAccessToken(context)
+
+        val request = object : JsonArrayRequest(Method.GET, url, null,
+            Response.Listener { response ->
+                onResult(response.length()) // Simply return the size of the array
+            },
+            Response.ErrorListener {
+                onResult(0) // Default to 0 on error to hide the dot
+            }
+        ) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer $accessToken"
+                return headers
+            }
+        }
+        VolleyHelper.getInstance(context).addToRequestQueue(request)
+    }
+
+    fun fetchAllUsers(context: Context, onSuccess: (List<User>) -> Unit, onError: (String) -> Unit) {
+        if (SessionManager.shouldForceLogout(context)) {
+            onError("Session expired. Please log in again.")
+            return
+        }
+
+        val url = ApiConstants.FETCH_ALL_USERS_URL
+
+        // ✅ Get the secure access token
+        val accessToken = AuthTokenProvider.getAccessToken(context)
+
+        if (accessToken.isNullOrEmpty()) {
+            onError("Access token is missing. Please log in again.")
+            return
+        }
+
+        val request = object : JsonArrayRequest(Method.GET, url, null,
+            Response.Listener { response ->
+                try {
+                    val userList = mutableListOf<User>()
+                    for (i in 0 until response.length()) {
+                        val userJson = response.getJSONObject(i)
+
+                        val user = User(
+                            id = userJson.optInt("user_id", 0),
+                            email = userJson.optString("email", "Unknown"),
+                            role = userJson.optString("role", "student"),
+                            status = userJson.optString("approved_date", "approved_date"),
+                            password = "",
+                            createdAt = userJson.optString("request_date", "")
+                        )
+                        userList.add(user)
+                    }
+                    onSuccess(userList)
+                } catch (e: Exception) {
+                    onError("Parsing error: ${e.message}")
+                }
+            },
+            Response.ErrorListener { error ->
+                val errorMessage = when (error) {
+                    is TimeoutError -> "Request timed out. Please check your internet connection."
+                    is NoConnectionError -> "No internet connection. Please try again later."
+                    is AuthFailureError -> "Authentication failed. Please contact support."
+                    is ServerError -> "Server error. Please try again later."
+                    is NetworkError -> "A network error occurred. Please check your connection."
+                    is ParseError -> "Data parsing error. Please contact support."
+                    else -> "Unexpected error: ${error.message}"
+                }
+                onError(errorMessage)
+            }
+        ) {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer $accessToken"
+                headers["Content-Type"] = "application/json"
+                return headers
+            }
+        }
+
+        VolleyHelper.getInstance(context).addToRequestQueue(request)
+    }
+
     fun acceptUser(context: Context?, requestId: Int, role: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (context == null || SessionManager.shouldForceLogout(context)) {
             onError("Session expired. Please log in again.")

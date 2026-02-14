@@ -12,8 +12,8 @@ const authorizeRoles = require("../middlewares/authorizeRoles");
 
 const router = express.Router();
 
-// Download PDF route for testing
-router.get("/events/:id/pdf", downloadEventPdf);
+// Download PDF
+router.get("/events/:id/pdf", authenticateToken, downloadEventPdf);
 
 // POST route to create a new event
 router.post(

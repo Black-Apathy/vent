@@ -209,34 +209,42 @@ class LoginActivity : ComponentActivity() {
                         onClick = {
                             if (isFormValid) {
                                 isLoading = true
-                                // First, check if the user already exists using the email
-                                UserApiService.checkUserStatus(appContext, email) { status, role ->
-//                                    Log.d("StatusCheck", "Status: $status, Role: $role")
 
-                                    if (status == "approved" && role == "admin") {
-                                        UserApiService.loginUser(appContext, email, password) { loginSuccess, loginMessage ->
-                                            if (loginSuccess) {
-                                                // Navigate to MainActivity only if login is successful
-                                                val intent = Intent(context, MainActivity::class.java)
-                                                context.startActivity(intent)
-                                                (context as? Activity)?.finish()
-                                            } else {
-                                                // Show login failure message
-                                                Toast.makeText(context, "Login Failed: $loginMessage", Toast.LENGTH_SHORT).show()
+                                // Check user status
+                                UserApiService.checkUserStatus(appContext, email) { status, role ->
+                                    when (status) {
+                                        "approved" -> {
+                                            UserApiService.loginUser(appContext, email, password) { loginSuccess, loginMessage ->
+                                                if (loginSuccess) {
+                                                    // Success! Go to Dashboard
+                                                    val intent = Intent(context, MainActivity::class.java)
+                                                    context.startActivity(intent)
+                                                    (context as? Activity)?.finish()
+                                                } else {
+                                                    // Login failed (wrong password, etc.)
+                                                    isLoading = false // Reset loading so they can try again
+                                                    Toast.makeText(context, "Login Failed: $loginMessage", Toast.LENGTH_SHORT).show()
+                                                }
                                             }
-                                        }// Finish current activity
-                                    } else {
-                                        // If the user does not exist or is not approved yet, proceed with the signup process
-                                        UserApiService.signupUser(appContext, email, password) { isSuccess ->
+                                        }
+                                        "pending" -> {
+                                            // They exist but are waiting. Stop them here!
                                             isLoading = false
-//                                            Log.d("SignupResponse", "Is Success: $isSuccess")
-                                            if (isSuccess) {
-                                                val intent = Intent(context, AwaitingApprovalActivity::class.java)
-                                                context.startActivity(intent)
-                                                (context as? Activity)?.finish()
-                                            } else {
-                                                // If signup failed
-                                                Toast.makeText(context, "Signup Failed", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "Account already awaiting approval.", Toast.LENGTH_SHORT).show()
+                                            val intent = Intent(context, AwaitingApprovalActivity::class.java)
+                                            context.startActivity(intent)
+                                        }
+                                        // If user doesn't exist (or any other status), attempt Sign Up
+                                        else -> {
+                                            UserApiService.signupUser(appContext, email, password) { isSuccess ->
+                                                isLoading = false
+                                                if (isSuccess) {
+                                                    val intent = Intent(context, AwaitingApprovalActivity::class.java)
+                                                    context.startActivity(intent)
+                                                    (context as? Activity)?.finish()
+                                                } else {
+                                                    Toast.makeText(context, "Signup Failed", Toast.LENGTH_SHORT).show()
+                                                }
                                             }
                                         }
                                     }

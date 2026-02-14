@@ -24,6 +24,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private boolean backPressedOnce = false;
 
 
+    /**
+     * Public method to navigate and sync the side menu highlight.
+     * This can be called from any Fragment.
+     */
+    public void navigateWithSync(int menuItemId) {
+        // 1. Update the Fragment
+        androidx.fragment.app.Fragment fragment = null;
+
+        if (menuItemId == R.id.nav_home) {
+            fragment = new HomeFragment();
+        } else if (menuItemId == R.id.nav_registration) {
+            fragment = new EventRegisterationFragment();
+        } else if (menuItemId == R.id.nav_pendingUsers) {
+            fragment = new PendingUsersFragment();
+        } else if (menuItemId == R.id.nav_dataview) {
+            fragment = new ViewDataFragment();
+        }
+
+        if (fragment != null) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null) // Allows the back button to work correctly
+                    .commit();
+        }
+
+        // 2. Sync the Navigation Drawer
+        navigationView.setCheckedItem(menuItemId);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +66,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        android.view.Menu menu = navigationView.getMenu();
+
+        String role = SessionManager.INSTANCE.getUserRole(this);
+        if (role == null) role = "student";
+
+        // Visibility Logic
+        if (role.equals("student")) {
+            MenuItem logEvent = menu.findItem(R.id.nav_registration);
+            if (logEvent != null) logEvent.setVisible(false);
+            MenuItem manageUsers = menu.findItem(R.id.nav_pendingUsers);
+            if (manageUsers != null) manageUsers.setVisible(false);
+        }
+        else if (role.equals("teacher")) {
+            MenuItem manageUsers = menu.findItem(R.id.nav_pendingUsers);
+            if (manageUsers != null) manageUsers.setVisible(false);
+        }
 
         // Adding Toggle for Navigation Drawer
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -89,41 +135,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        int itemId = item.getItemId();
+        int id = item.getItemId();
 
-        if (itemId == R.id.nav_home) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new HomeFragment())
-                    .commit();
-        } else if (itemId == R.id.nav_registration) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new EventRegisterationFragment())
-                    .commit();
-        } else if (itemId == R.id.nav_pendingUsers) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new PendingUsersFragment())
-                    .commit();
-        } else if (itemId == R.id.nav_dataview) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new ViewDataFragment())
-                    .commit();
-        } else if (itemId == R.id.nav_about) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new AboutUsFragment())
-                    .commit();
-        } else if (itemId == R.id.nav_logout) {
-            SessionManager.INSTANCE.logout(this);
-
-            Toast.makeText(this, "Logged out successfully!", Toast.LENGTH_SHORT).show();
-
-            // Redirect to LoginActivity
-            Intent intent = new Intent(this, LoginActivity.class);
-            startActivity(intent);
-            finish();
+        if (id == R.id.nav_logout) {
+            showLogoutConfirmation(); // Call a confirmation dialog
+        } else {
+            navigateWithSync(id);
         }
 
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void showLogoutConfirmation() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    // 1. Clear Tokens
+                    SessionManager.INSTANCE.logout(this);
+
+                    // 2. Redirect to Login
+                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .show();
     }
 
 }
