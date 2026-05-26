@@ -540,12 +540,25 @@ public class EventRegisterationFragment extends Fragment {
                     Map<String, String> params = new HashMap<>();
                     params.put("pn", programName);
                     params.put("pt", programType);
-                    params.put("np", participants);
+                    params.put("nof", participants);
                     params.put("sd", startDate);
                     params.put("ed", endDate);
                     params.put("st", startTime);
                     params.put("et", endTime);
                     return params;
+                }
+
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String> headers = new HashMap<>();
+
+                    // Grab the token from Kotlin SecurePrefs object
+                    String token = com.example.vent.utils.SecurePrefs.INSTANCE.getAccessToken(requireContext());
+
+                    if (token != null && !token.isEmpty()) {
+                        headers.put("Authorization", "Bearer " + token);
+                    }
+                    return headers;
                 }
             };
 

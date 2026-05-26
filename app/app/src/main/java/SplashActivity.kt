@@ -1,109 +1,87 @@
 package com.example.vent
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.compose.setContent
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.vent.com.example.vent.utils.AuthTokenProvider
 import com.example.vent.com.example.vent.utils.SessionManager
 import com.example.vent.network.UserApiService
-import kotlinx.coroutines.delay
 
+@SuppressLint("CustomSplashScreen")
 class SplashActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            // Call the actual composable here
-            SplashScreenContent()
-        }
+        setContentView(R.layout.activity_splash) // Using the XML layout we created
+
+        // 1. Find Views
+        val logo = findViewById<ImageView>(R.id.img_logo)
+        val text = findViewById<TextView>(R.id.tv_app_name)
+
+        // 2. Set Initial Positions (Push them down so they can slide up)
+        logo.translationY = 100f
+        text.translationY = 100f
+
+        // 3. Animate Logo (Fade In + Slide Up)
+        logo.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(1000)
+            .setStartDelay(200)
+            .start()
+
+        // 4. Animate Text & Trigger Session Check
+        text.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(1000)
+            .setStartDelay(500) // Starts slightly after logo
+            .withEndAction {
+                // 5. ANIMATION FINISHED -> NOW CHECK LOGIN STATUS
+                checkUserSession()
+            }
+            .start()
     }
 
-    // This is the Composable that will be displayed
-    @Composable
-    fun SplashScreenContent() {
-        val emojis = listOf("🎉", "🎈", "🥳", "✨")
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = colorResource(id = R.color.cream)),
-            contentAlignment = androidx.compose.ui.Alignment.Center
-        ) {
-            EmojiWaveLoader(emojis)
-        }
-
-        // Handle the token logic using LaunchedEffect
-        LaunchedEffect(Unit) {
-            // The rest of your token logic here...
-            if (SessionManager.shouldForceLogout(this@SplashActivity)) {
-                SessionManager.logout(this@SplashActivity)
-                startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
-                finish()
-            } else if (AuthTokenProvider.isAccessTokenExpired(this@SplashActivity)) {
-                val refreshToken = AuthTokenProvider.getRefreshToken(this@SplashActivity)
-                if (refreshToken.isNullOrEmpty()) {
-                    SessionManager.logout(this@SplashActivity)
-                    startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
-                    finish()
-                } else {
-                    UserApiService.refreshToken(this@SplashActivity, refreshToken) { success ->
-                        if (success) {
-                            startActivity(Intent(this@SplashActivity, MainActivity::class.java))
-                        } else {
-                            SessionManager.logout(this@SplashActivity)
-                            startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
-                        }
-                        finish()
+    /**
+     * Your original Token/Session Logic, moved from Compose to a standard function.
+     */
+    private fun checkUserSession() {
+        if (SessionManager.shouldForceLogout(this)) {
+            navigateToLogin()
+        } else if (AuthTokenProvider.isAccessTokenExpired(this)) {
+            val refreshToken = AuthTokenProvider.getRefreshToken(this)
+            if (refreshToken.isNullOrEmpty()) {
+                navigateToLogin()
+            } else {
+                // Attempt to refresh the token
+                UserApiService.refreshToken(this, refreshToken) { success ->
+                    if (success) {
+                        navigateToMain()
+                    } else {
+                        navigateToLogin()
                     }
                 }
-            } else {
-                startActivity(Intent(this@SplashActivity, MainActivity::class.java))
-                finish()
             }
+        } else {
+            // Token is valid
+            navigateToMain()
         }
     }
 
-    // Keep the preview function separate
-    @Preview
-    @Composable
-    fun PreviewSplashScreen() {
-        SplashScreenContent()
+    private fun navigateToMain() {
+        startActivity(Intent(this, MainActivity::class.java))
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        finish()
     }
 
-    @Composable
-    fun EmojiWaveLoader(emojis: List<String>) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            emojis.forEachIndexed { index, emoji ->
-                val infiniteTransition = rememberInfiniteTransition(label = "emojiWaveTransition")
-                val offset by infiniteTransition.animateFloat(
-                    initialValue = 0f,
-                    targetValue = -20f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(
-                            durationMillis = 600,
-                            easing = LinearEasing,
-                            delayMillis = index * 100
-                        ),
-                        repeatMode = RepeatMode.Reverse
-                    ), label = "emojiOffsetAnimation"
-                )
-                Box(modifier = Modifier.offset(y = offset.dp)) {
-                    Text(text = emoji, fontSize = 32.sp)
-                }
-            }
-        }
+    private fun navigateToLogin() {
+        SessionManager.logout(this)
+        startActivity(Intent(this, LoginActivity::class.java))
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        finish()
     }
 }

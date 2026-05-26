@@ -18,9 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vent.utils.AnimationUtils
+import com.example.vent.utils.TimeUtils.formatTime
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 @Composable
 fun ViewEventsScreen(
@@ -91,7 +96,12 @@ fun EventCard(event: Model, onClick: () -> Unit) {
                     text = event.name,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF003366) // BlueMain
+                    color = Color(0xFF003366), // BlueMain
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 12.dp),
+                    maxLines = 2, // Wraps long names beautifully
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 // Type Badge
@@ -104,7 +114,8 @@ fun EventCard(event: Model, onClick: () -> Unit) {
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         color = Color(0xFFFF6600),
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
                     )
                 }
             }
@@ -115,7 +126,12 @@ fun EventCard(event: Model, onClick: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(text = "${event.startDate} • ${event.startTime}", color = Color.Gray, fontSize = 14.sp)
+                val prettyDate = formatIsoDate(event.startDate)
+                val prettyStartTime = formatTime(event.startTime)
+                val prettyEndTime = formatTime(event.endTime)
+
+                // Prints: Jun 10, 2026 • 10:00 AM - 1:00 PM
+                Text(text = "$prettyDate • $prettyStartTime - $prettyEndTime", color = Color.Gray, fontSize = 14.sp)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -127,5 +143,21 @@ fun EventCard(event: Model, onClick: () -> Unit) {
                 Text(text = "${event.participants} Participants", color = Color.Gray, fontSize = 14.sp)
             }
         }
+    }
+}
+
+fun formatIsoDate(isoString: String): String {
+    return try {
+        // Read the MariaDB format
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        parser.timeZone = TimeZone.getTimeZone("UTC")
+        val date = parser.parse(isoString)
+
+        // Output the beautiful format
+        val formatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+        date?.let { formatter.format(it) } ?: isoString
+    } catch (e: Exception) {
+        // Fallback just in case the server sends something weird
+        isoString
     }
 }

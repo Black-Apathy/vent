@@ -2,7 +2,7 @@ package com.example.vent.network
 
 object ApiConstants {
     // Base URL for the API
-    private const val BASE_URL = "http://127.0.0.1:3000/"
+    private const val BASE_URL = "http://52.66.159.23:3000/"
 
     // Endpoints
     const val REGISTER_URL = "${BASE_URL}register"
