@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
+const HOST = "0.0.0.0";
 
 // Import middlewares
 const { applyMiddlewares, errorHandler } = require("./middlewares");
@@ -28,5 +28,5 @@ app.use(errorHandler);
 // Start the server
 app.listen(port, HOST, () => {
   console.log(`🚀 Server is running at http://${HOST}:${port}`);
-  console.log(`📡 Reachable on your network at http://10.22.186.3:${port}`);
+  console.log(`📡 Reachable on your network at http://52.66.159.23:${port}`);
 });

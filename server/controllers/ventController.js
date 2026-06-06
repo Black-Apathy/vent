@@ -4,29 +4,35 @@ const moment = require("moment");
 
 /**
  * Inserts a new event into the college_events table.
- * Expects: pn, pt, nof, sd, ed, st, et in req.body
+ * Expects: pn, pt, mp, fp, tc, ba, sd, ed, st, et in req.body
  */
 exports.submitData = async (req, res) => {
-  const { pn, pt, nof, sd, ed, st, et } = req.body;
+  const { pn, pt, mp, fp, tc, ba, sd, ed, st, et, di, ci } = req.body;
 
-  if (pn && pt && nof && sd && st) {
+  if (pn && pt && sd && st) {
     const formattedStartDate = moment(sd, "D/M/YYYY").format("YYYY-MM-DD");
     const formattedEndDate = moment(ed, "D/M/YYYY").format("YYYY-MM-DD");
     const formattedStartTime = moment(st, "hh:mm A").format("HH:mm:ss");
     const formattedEndTime = moment(et, "hh:mm A").format("HH:mm:ss");
 
-    const mysql_qry =
-      "INSERT INTO college_events (Program_Name, Program_Type, No_of_Participants, Start_Date, End_Date, Start_Time, End_Time) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    const mysql_qry = `INSERT INTO college_events
+            (Program_Name, Program_Type, Male_Participants, Female_Participants, Teacher_Coordinator, Budget_Allocated, Start_Date, End_Date, Start_Time, End_Time, department_id, committee_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     try {
       await db.query(mysql_qry, [
         pn,
         pt,
-        nof,
+        mp || 0,
+        fp || 0,
+        tc || null,
+        ba || null,
         formattedStartDate,
         formattedEndDate,
         formattedStartTime,
         formattedEndTime,
+        di || null,
+        ci || null,
       ]);
       res
         .status(201)
@@ -40,7 +46,7 @@ exports.submitData = async (req, res) => {
   } else {
     res.status(400).json({
       message:
-        "Missing Program Name, Program Type, Number of Participants, Start Date, or Start Time",
+        "Missing essential fields (Program Name, Type, Start Date, or Start Time)",
     });
   }
 };
@@ -49,7 +55,15 @@ exports.submitData = async (req, res) => {
  * Fetches all events from the college_events table.
  */
 exports.getData = async (req, res) => {
-  const mysql_qry = "SELECT * FROM college_events";
+  const mysql_qry = `
+      SELECT ce.*,
+      (ce.Male_Participants + ce.Female_Participants) AS Total_Participants,
+      ROUND(TIME_TO_SEC(TIMEDIFF(ce.End_Time, ce.Start_Time)) / 3600, 2) AS Duration_Hours,
+      d.department_name,
+      c.committee_name
+      FROM college_events ce
+      LEFT JOIN departments d ON ce.department_id = d.id
+      LEFT JOIN committees c ON ce.committee_id = c.id`;
 
   try {
     const results = await db.query(mysql_qry);
@@ -71,7 +85,16 @@ exports.getEventById = async (req, res) => {
     return res.status(400).json({ message: "Event ID is required" });
   }
 
-  const mysql_qry = "SELECT * FROM college_events WHERE event_id = ?";
+  const mysql_qry = `
+      SELECT ce.*,
+      (ce.Male_Participants + ce.Female_Participants) AS Total_Participants,
+      ROUND(TIME_TO_SEC(TIMEDIFF(ce.End_Time, ce.Start_Time)) / 3600, 2) AS Duration_Hours,
+      d.department_name,
+      c.committee_name
+      FROM college_events ce
+      LEFT JOIN departments d ON ce.department_id = d.id
+      LEFT JOIN committees c ON ce.committee_id = c.id
+      WHERE ce.event_id = ?`;
 
   try {
     const results = await db.query(mysql_qry, [eventId]);
@@ -139,9 +162,21 @@ exports.updateEvent = async (req, res) => {
     fieldsToUpdate.push("Program_Type = ?");
     valuesToUpdate.push(updateData.Program_Type);
   }
-  if (updateData.No_of_Participants !== undefined) {
-    fieldsToUpdate.push("No_of_Participants = ?");
-    valuesToUpdate.push(updateData.No_of_Participants);
+  if (updateData.Male_Participants !== undefined) {
+    fieldsToUpdate.push("Male_Participants = ?");
+    valuesToUpdate.push(updateData.Male_Participants);
+  }
+  if (updateData.Female_Participants !== undefined) {
+    fieldsToUpdate.push("Female_Participants = ?");
+    valuesToUpdate.push(updateData.Female_Participants);
+  }
+  if (updateData.Teacher_Coordinator !== undefined) {
+    fieldsToUpdate.push("Teacher_Coordinator = ?");
+    valuesToUpdate.push(updateData.Teacher_Coordinator);
+  }
+  if (updateData.Budget_Allocated !== undefined) {
+    fieldsToUpdate.push("Budget_Allocated = ?");
+    valuesToUpdate.push(updateData.Budget_Allocated);
   }
   if (updateData.Start_Date !== undefined) {
     fieldsToUpdate.push("Start_Date = ?");
@@ -159,6 +194,14 @@ exports.updateEvent = async (req, res) => {
     fieldsToUpdate.push("End_Time = ?");
     valuesToUpdate.push(updateData.End_Time);
   }
+  if (updateData.department_id !== undefined) {
+    fieldsToUpdate.push("department_id = ?");
+    valuesToUpdate.push(updateData.department_id);
+  }
+  if (updateData.committee_id !== undefined) {
+    fieldsToUpdate.push("committee_id = ?");
+    valuesToUpdate.push(updateData.committee_id);
+  }
 
   if (fieldsToUpdate.length === 0) {
     return res.status(400).json({ message: "No valid fields to update" });
@@ -167,7 +210,7 @@ exports.updateEvent = async (req, res) => {
   valuesToUpdate.push(eventId);
 
   const sqlQuery = `UPDATE college_events SET ${fieldsToUpdate.join(
-    ", "
+    ", ",
   )} WHERE event_id = ?`;
 
   try {
@@ -200,7 +243,19 @@ exports.downloadEventPdf = async (req, res) => {
 
     // 1. Fetch from DB
     // The destructuring [rows] here is actually extracting the first result from the query array
-    const [rows] = await db.query('SELECT * FROM college_events WHERE event_id = ?', [eventId]);
+    const [rows] = await db.query(
+      `
+          SELECT ce.*,
+          (ce.Male_Participants + ce.Female_Participants) AS Total_Participants,
+          ROUND(TIME_TO_SEC(TIMEDIFF(ce.End_Time, ce.Start_Time)) / 3600, 2) AS Duration_Hours,
+          d.department_name,
+          c.committee_name
+          FROM college_events ce
+          LEFT JOIN departments d ON ce.department_id = d.id
+          LEFT JOIN committees c ON ce.committee_id = c.id
+          WHERE ce.event_id = ?`,
+      [eventId],
+    );
 
     // 2. Check if we actually got data
     if (!rows) {
@@ -220,7 +275,6 @@ exports.downloadEventPdf = async (req, res) => {
       "Content-Disposition": `attachment; filename="Event_${eventId}.pdf"`,
     });
     res.send(pdfBuffer);
-
   } catch (error) {
     console.error("PDF Error:", error);
     res.status(500).json({ error: "Could not generate PDF" });
