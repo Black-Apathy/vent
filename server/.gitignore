@@ -10,3 +10,6 @@ build/
 # Database Backups
 *backup.sql
 vent_backup.sql
+
+# Bruno Local Tokens
+api_tests/Vent/environments/

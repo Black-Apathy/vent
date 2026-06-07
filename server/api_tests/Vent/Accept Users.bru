@@ -1,0 +1,22 @@
+meta {
+  name: Accept Users
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://4jwfse-ip-122-170-2-205.tunnelmole.net/approve-user
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "request_id": "33",
+    "role": "admin"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

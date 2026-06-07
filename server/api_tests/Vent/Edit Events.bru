@@ -1,0 +1,25 @@
+meta {
+  name: Edit Events
+  type: http
+  seq: 8
+}
+
+patch {
+  url: https://bwbvcx-ip-122-170-2-205.tunnelmole.net/events/8
+  body: json
+  auth: inherit
+}
+
+headers {
+}
+
+body:json {
+  {
+    "Program_Name": "New Event Name",
+    "Start_Date": "2025-04-20"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

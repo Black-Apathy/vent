@@ -1,5 +1,6 @@
 const db = require("../utils/dbUtils");
-const { generatePdfBuffer } = require("../utils/pdfService");
+const { generatePdfBuffer } = require("../utils/pdf/pdfService");
+const { buildEventHtml } = require("../utils/pdf/pdfTemplate");
 const moment = require("moment");
 
 /**
@@ -279,4 +280,37 @@ exports.downloadEventPdf = async (req, res) => {
     console.error("PDF Error:", error);
     res.status(500).json({ error: "Could not generate PDF" });
   }
+};
+
+// Temporary route to test the PDF layout
+exports.previewPdfHtml = (req, res) => {
+  const dummyData = {
+    event_id: 999,
+    Program_Name: "AWS Cloud Computing Workshop",
+    Program_Type: "Educational",
+    department_name: "B.Sc. Information Technology",
+    Teacher_Coordinator: "Prof. Smitha",
+    Total_Participants: 120,
+    Male_Participants: 70,
+    Female_Participants: 50,
+    Duration_Hours: 4.5,
+    Start_Date: "2026-06-10T00:00:00.000Z",
+    Start_Time: "10:00:00",
+    End_Date: "2026-06-10T00:00:00.000Z",
+    End_Time: "14:30:00",
+    Budget_Allocated: 5000,
+    committee_name: null,
+  };
+
+  const htmlContent = buildEventHtml(dummyData, "");
+
+  // 1. Force Content-Type to HTML
+  // 2. Temporarily override CSP to allow our inline styles and Google Fonts
+  res.set({
+    "Content-Type": "text/html",
+    "Content-Security-Policy":
+      "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;",
+  });
+
+  res.send(htmlContent);
 };

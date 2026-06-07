@@ -6,11 +6,15 @@ const {
   deleteEvent,
   updateEvent,
   downloadEventPdf,
+  previewPdfHtml, // Testing purpose PDF preview
 } = require("../controllers/ventController");
 const authenticateToken = require("../middlewares/authenticateToken");
 const authorizeRoles = require("../middlewares/authorizeRoles");
 
 const router = express.Router();
+
+// Test PDF template
+router.get("/test-pdf", previewPdfHtml);
 
 // Download PDF
 router.get("/events/:id/pdf", authenticateToken, downloadEventPdf);
@@ -20,7 +24,7 @@ router.post(
   "/events",
   authenticateToken,
   authorizeRoles("admin", "teacher"),
-  submitData
+  submitData,
 );
 
 // GET route to fetch all events
@@ -34,7 +38,7 @@ router.delete(
   "/events/:event_id",
   authenticateToken,
   authorizeRoles("admin", "teacher"),
-  deleteEvent
+  deleteEvent,
 );
 
 // PATCH route to update event partially by ID
@@ -42,7 +46,7 @@ router.patch(
   "/events/:event_id",
   authenticateToken,
   authorizeRoles("admin", "teacher"),
-  updateEvent
+  updateEvent,
 );
 
 module.exports = router;

@@ -1,0 +1,22 @@
+meta {
+  name: SignUp Users
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://4jwfse-ip-122-170-2-205.tunnelmole.net/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "deril@example.me",
+    "password": "Good@123"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

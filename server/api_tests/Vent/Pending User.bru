@@ -1,0 +1,18 @@
+meta {
+  name: Pending User
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseURL}}/pending-user
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+}
+
+settings {
+  encodeUrl: true
+}
