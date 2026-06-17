@@ -5,57 +5,82 @@ const moment = require("moment");
 
 /**
  * Inserts a new event into the college_events table.
- * Expects: pn, pt, mp, fp, tc, ba, sd, ed, st, et in req.body
+ * Unified to expect full column names matching the PATCH route.
  */
 exports.submitData = async (req, res) => {
-  const { pn, pt, mp, fp, tc, ba, sd, ed, st, et, di, ci } = req.body;
+  const {
+    Program_Name,
+    Program_Type,
+    Male_Participants,
+    Female_Participants,
+    Teacher_Coordinator,
+    Budget_Allocated,
+    Start_Date,
+    End_Date,
+    Start_Time,
+    End_Time,
+    department_id,
+    committee_id,
+  } = req.body;
 
-  if (pn && pt && sd && st) {
-    const formattedStartDate = moment(sd, "D/M/YYYY").format("YYYY-MM-DD");
-    const formattedEndDate = moment(ed, "D/M/YYYY").format("YYYY-MM-DD");
-    const formattedStartTime = moment(st, "hh:mm A").format("HH:mm:ss");
-    const formattedEndTime = moment(et, "hh:mm A").format("HH:mm:ss");
+  if (!Program_Name || !Program_Type || !Start_Date || !Start_Time) {
+    return res.status(400).json({
+      status: "error",
+      message:
+        "Missing essential fields (Program Name, Type, Start Date, or Start Time)",
+    });
+  }
+
+  try {
+    // Safely parse dates. If End_Date is missing, default it to Start_Date
+    const formattedStartDate = moment(Start_Date, [
+      "D/M/YYYY",
+      "YYYY-MM-DD",
+    ]).format("YYYY-MM-DD");
+    const formattedEndDate = End_Date
+      ? moment(End_Date, ["D/M/YYYY", "YYYY-MM-DD"]).format("YYYY-MM-DD")
+      : formattedStartDate;
+
+    const formattedStartTime = moment(Start_Time, [
+      "hh:mm A",
+      "HH:mm:ss",
+    ]).format("HH:mm:ss");
+    const formattedEndTime = End_Time
+      ? moment(End_Time, ["hh:mm A", "HH:mm:ss"]).format("HH:mm:ss")
+      : formattedStartTime;
 
     const mysql_qry = `INSERT INTO college_events
             (Program_Name, Program_Type, Male_Participants, Female_Participants, Teacher_Coordinator, Budget_Allocated, Start_Date, End_Date, Start_Time, End_Time, department_id, committee_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    try {
-      await db.query(mysql_qry, [
-        pn,
-        pt,
-        mp || 0,
-        fp || 0,
-        tc || null,
-        ba || null,
-        formattedStartDate,
-        formattedEndDate,
-        formattedStartTime,
-        formattedEndTime,
-        di || null,
-        ci || null,
-      ]);
-      res
-        .status(201)
-        .json({ status: "success", message: "Data inserted successfully" });
-    } catch (err) {
-      console.error("Error inserting data:", err);
-      res
-        .status(500)
-        .json({ status: "error", message: "Error inserting data" });
-    }
-  } else {
-    res.status(400).json({
-      message:
-        "Missing essential fields (Program Name, Type, Start Date, or Start Time)",
-    });
+    await db.query(mysql_qry, [
+      Program_Name,
+      Program_Type,
+      Male_Participants || 0,
+      Female_Participants || 0,
+      Teacher_Coordinator || null,
+      Budget_Allocated || null,
+      formattedStartDate,
+      formattedEndDate,
+      formattedStartTime,
+      formattedEndTime,
+      department_id || null,
+      committee_id || null,
+    ]);
+
+    res
+      .status(201)
+      .json({ status: "success", message: "Data inserted successfully" });
+  } catch (err) {
+    console.error("Error inserting data:", err);
+    res.status(500).json({ status: "error", message: "Error inserting data" });
   }
 };
 
 /**
  * Fetches all events from the college_events table.
  */
-exports.getData = async (req, res) => {
+exports.getEvents = async (req, res) => {
   const mysql_qry = `
       SELECT ce.*,
       (ce.Male_Participants + ce.Female_Participants) AS Total_Participants,
@@ -313,4 +338,46 @@ exports.previewPdfHtml = (req, res) => {
   });
 
   res.send(htmlContent);
+};
+
+// ==========================================
+// LOOKUP APIs FOR ANDROID DROPDOWNS
+// ==========================================
+
+// GET: Fetch all Departments
+exports.getDepartments = async (req, res) => {
+  try {
+    const query = `
+            SELECT
+                id AS department_id,
+                department_name AS department_name
+            FROM departments
+            ORDER BY department_name ASC
+        `;
+
+    const departments = await db.query(query);
+    res.status(200).json(departments);
+  } catch (error) {
+    console.error("Error fetching departments:", error);
+    res.status(500).json({ error: "Failed to fetch departments" });
+  }
+};
+
+// GET: Fetch all Committees
+exports.getCommittees = async (req, res) => {
+  try {
+    const query = `
+            SELECT
+                id AS committee_id,
+                committee_name AS committee_name
+            FROM committees
+            ORDER BY committee_name ASC
+        `;
+
+    const committees = await db.query(query);
+    res.status(200).json(committees);
+  } catch (error) {
+    console.error("Error fetching committees:", error);
+    res.status(500).json({ error: "Failed to fetch committees" });
+  }
 };

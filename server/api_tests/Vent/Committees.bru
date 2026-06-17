@@ -1,0 +1,20 @@
+meta {
+  name: Committees
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{base_URL}}/api/v1/committees
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMiwiZW1haWwiOiJkZXJpbEBleGFtcGxlLm1lIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxNjg2Mzg1LCJleHAiOjE3ODE2ODk5ODV9.zPUR1kAPHiXDTdCYsZshLS_C3DiW-PzfVPVuRNQk9n4
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

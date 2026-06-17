@@ -1,1 +1,4 @@
 .env
+node_modules/
+vent_backup.sql
+api_tests/

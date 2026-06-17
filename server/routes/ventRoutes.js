@@ -1,25 +1,64 @@
+/**
+ * @file ventRoutes.js
+ * @description Express router handling Core Events, Lookup Data, and PDF Exports.
+ * Implements JWT authentication and Role-Based Access Control (RBAC) for mutations.
+ */
+
 const express = require("express");
 const {
   submitData,
-  getData,
+  getEvents,
   getEventById,
   deleteEvent,
   updateEvent,
   downloadEventPdf,
-  previewPdfHtml, // Testing purpose PDF preview
+  getDepartments,
+  getCommittees,
+  previewPdfHtml,
 } = require("../controllers/ventController");
+
 const authenticateToken = require("../middlewares/authenticateToken");
 const authorizeRoles = require("../middlewares/authorizeRoles");
 
 const router = express.Router();
 
-// Test PDF template
+// ==========================================
+// PDF GENERATION & REPORTING ROUTES
+// ==========================================
+
+// Dev utility: Renders raw HTML template for debugging
 router.get("/test-pdf", previewPdfHtml);
 
-// Download PDF
+// Protected: Generates and serves the official event report PDF
 router.get("/events/:id/pdf", authenticateToken, downloadEventPdf);
 
-// POST route to create a new event
+// ==========================================
+// LOOKUP DATA ROUTES (Read-Only)
+// ==========================================
+
+// Protected: Fetches metadata for dropdowns and mapping
+router.get(
+  "/departments",
+  authenticateToken,
+  authorizeRoles("admin", "teacher", "student"),
+  getDepartments,
+);
+router.get(
+  "/committees",
+  authenticateToken,
+  authorizeRoles("admin", "teacher", "student"),
+  getCommittees,
+);
+
+// ==========================================
+// CORE EVENT ROUTES (CRUD)
+// ==========================================
+
+// Publicly accessible event retrieval
+router.get("/events", getEvents);
+router.get("/events/:id", getEventById);
+
+// Restricted (Admin/Teacher): Event creation
 router.post(
   "/events",
   authenticateToken,
@@ -27,26 +66,20 @@ router.post(
   submitData,
 );
 
-// GET route to fetch all events
-router.get("/events", getData);
-
-// Route to get a single event by ID
-router.get("/events/:id", getEventById);
-
-// DELETE route to delete an event by ID
-router.delete(
-  "/events/:event_id",
-  authenticateToken,
-  authorizeRoles("admin", "teacher"),
-  deleteEvent,
-);
-
-// PATCH route to update event partially by ID
+// Restricted (Admin/Teacher): Partial event updates
 router.patch(
-  "/events/:event_id",
+  "/events/:id",
   authenticateToken,
   authorizeRoles("admin", "teacher"),
   updateEvent,
+);
+
+// Restricted (Admin/Teacher): Event deletion
+router.delete(
+  "/events/:id",
+  authenticateToken,
+  authorizeRoles("admin", "teacher"),
+  deleteEvent,
 );
 
 module.exports = router;
